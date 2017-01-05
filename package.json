@@ -22,6 +22,7 @@
   "homepage": "https://github.com/flowbased/fbp-graph#readme",
   "devDependencies": {
     "chai": "^3.5.0",
+    "coffee-script": "^1.12.2",
     "grunt": "^1.0.1",
     "grunt-coffeelint": "0.0.16",
     "grunt-contrib-coffee": "^1.0.0",
@@ -32,6 +33,7 @@
     "mocha": "^3.2.0"
   },
   "dependencies": {
-    "clone": "^2.1.0"
+    "clone": "^2.1.0",
+    "fbp": "^1.5.0"
   }
 }
