@@ -1,0 +1,37 @@
+{
+  "name": "fbp-graph",
+  "version": "0.1.0",
+  "description": "JavaScript FBP graph library",
+  "main": "index.js",
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/flowbased/fbp-graph.git"
+  },
+  "keywords": [
+    "fbp",
+    "graph"
+  ],
+  "author": "Henri Bergius <henri.bergius@iki.fi>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/flowbased/fbp-graph/issues"
+  },
+  "homepage": "https://github.com/flowbased/fbp-graph#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "grunt": "^1.0.1",
+    "grunt-coffeelint": "0.0.16",
+    "grunt-contrib-coffee": "^1.0.0",
+    "grunt-contrib-connect": "^1.0.2",
+    "grunt-mocha-phantomjs": "^4.0.0",
+    "grunt-mocha-test": "^0.13.2",
+    "grunt-noflo-browser": "^1.0.2",
+    "mocha": "^3.2.0"
+  },
+  "dependencies": {
+    "clone": "^2.1.0"
+  }
+}
