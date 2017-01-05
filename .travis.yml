@@ -2,3 +2,12 @@ language: node_js
 sudo: false
 node_js:
 - '4.6'
+deploy:
+  provider: npm
+  email: henri.bergius@iki.fi
+  api_key:
+    secure: sZuiOIIIvGutiLYZ1qWDTlWRs9VdzpwiH0YhUSY4MTmMuH4EpMmPHqcAV2qb4WmLF68+mmy3BbDR+abvFVs0Ik6Buvzjhqq4XyKnOq2DzpGV5Q9V2zxMEIPTPuylc9oxln7ScUWn+2JVtYV2m+L0DxOn/BIFhMYNLdolrauylfF4eam8quUSBFFsDOeb2C11l2jHk/vKvbmZCAbbCudOA6ePQc9efN4jt9jgzYU5xMYza1keGG1QTGbayZwxYJtObEAG45MnWKMvz1wj8pYcg27nx1Z6Zv8/Li6Pn69c3haBqSrMuqPLnrSHJojb0zv4/zSEqDFaO1SfL0knNPQiJEsu19ikovojsWopMkoZ9ESBwYaH978FuEd9dcHs0wcdsqTrEYC2cHZuHVDZdyeRU9eCT/Q8pTBVWfiYkAaNEdxoe5Ng6fAXKpg8rs1FYqv32NCZJJijRUd98wagES8rICvg6ZfacljzmcDX+CNqxnEIcq/bPD+d1isjpgWxWv+/i76/x+VK13S1Grxk6lOYonL3XEbmBDcOSTeSbT46kMiE1Y1vMYzYXjZq6BaNaHHdkjmI19g40XRsM2l2AJfcHC/vyTKviFtyR2AcB5FX6aJ+O4DpOxd4vjXTjqTqbLUkOqAVL0I6BOz+KNXc3FcjLyiQCyBabPCBW+rUle0DIUA=
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: flowbased/fbp-graph
