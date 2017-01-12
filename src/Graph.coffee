@@ -179,7 +179,7 @@ class Graph extends EventEmitter
         @inports[publicPort].metadata[item] = val
       else
         delete @inports[publicPort].metadata[item]
-    @emit 'changeInport', publicPort, @inports[publicPort], before
+    @emit 'changeInport', publicPort, @inports[publicPort], before, metadata
     @checkTransactionEnd()
 
   addOutport: (publicPort, nodeKey, portKey, metadata) ->
@@ -232,7 +232,7 @@ class Graph extends EventEmitter
         @outports[publicPort].metadata[item] = val
       else
         delete @outports[publicPort].metadata[item]
-    @emit 'changeOutport', publicPort, @outports[publicPort], before
+    @emit 'changeOutport', publicPort, @outports[publicPort], before, metadata
     @checkTransactionEnd()
 
   # ## Grouping nodes in a graph
@@ -281,7 +281,7 @@ class Graph extends EventEmitter
           group.metadata[item] = val
         else
           delete group.metadata[item]
-      @emit 'changeGroup', group, before
+      @emit 'changeGroup', group, before, metadata
     @checkTransactionEnd()
 
   # ## Adding a node to the graph
@@ -446,7 +446,7 @@ class Graph extends EventEmitter
       else
         delete node.metadata[item]
 
-    @emit 'changeNode', node, before
+    @emit 'changeNode', node, before, metadata
     @checkTransactionEnd()
 
   # ## Connecting nodes
@@ -580,7 +580,7 @@ class Graph extends EventEmitter
       else
         delete edge.metadata[item]
 
-    @emit 'changeEdge', edge, before
+    @emit 'changeEdge', edge, before, metadata
     @checkTransactionEnd()
 
   # ## Adding Initial Information Packets
