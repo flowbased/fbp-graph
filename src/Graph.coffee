@@ -788,8 +788,8 @@ class Graph extends EventEmitter
 
     json = JSON.stringify @toJSON(), null, 4
     require('fs').writeFile "#{file}.json", json, "utf-8", (err, data) ->
-      throw err if err
-      callback file
+      return callback err if err
+      callback null, file
 
 exports.Graph = Graph
 
