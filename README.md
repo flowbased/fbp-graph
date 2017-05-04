@@ -1,6 +1,8 @@
 FBP Graph library for JavaScript
 ================================
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/flowbased/fbp-graph.svg)](https://greenkeeper.io/)
+
 This library provides a JavaScript implementation of Flow-Based Programming graphs. There are two areas covered:
 
 * `Graph` - the actual graph library
