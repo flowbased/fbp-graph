@@ -160,6 +160,7 @@ class Graph extends EventEmitter
     oldPort = @getPortName oldPort
     newPort = @getPortName newPort
     return unless @inports[oldPort]
+    return if newPort is oldPort
 
     @checkTransactionStart()
     @inports[newPort] = @inports[oldPort]
