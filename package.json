@@ -33,7 +33,7 @@
     "grunt-mocha-test": "^0.13.2",
     "grunt-noflo-browser": "^1.0.2",
     "json-loader": "^0.5.4",
-    "mocha": "^3.2.0"
+    "mocha": "^4.0.0"
   },
   "dependencies": {
     "clone": "^2.1.0",
