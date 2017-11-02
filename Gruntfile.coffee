@@ -6,6 +6,8 @@ module.exports = ->
     # CoffeeScript compilation
     coffee:
       src:
+        options:
+          bare: true
         expand: true
         cwd: 'src'
         src: ['**.coffee']
@@ -24,6 +26,16 @@ module.exports = ->
     noflo_browser:
       options:
         baseDir: './'
+        webpack:
+          module:
+            rules: [
+              test: /\.js$/,
+              use: [
+                loader: 'babel-loader'
+                options:
+                  presets: ['es2015']
+              ]
+            ]
       build:
         files:
           'browser/fbp-graph.js': ['webpack.entry.js']
@@ -34,7 +46,7 @@ module.exports = ->
         src: ['spec/*.coffee']
         options:
           reporter: 'spec'
-          require: 'coffee-script/register'
+          require: 'coffeescript/register'
           grep: process.env.TESTS
 
     # Web server for the browser tests
