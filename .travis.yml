@@ -7,6 +7,7 @@ after_success:
 deploy:
   provider: npm
   email: henri.bergius@iki.fi
+  skip_cleanup: true
   api_key:
     secure: BgwDjY040enUUuVJx0VnlQ0lI68QOI++rfBjQUqPV7ecR9I12D+9QAW67upJmr5fipCc2NIbXzEKhQt0pOD5/QlU+lrzf84Rx8X1KysZYt8XDg5pgaEJtVpI47AMgLeORVFuYVzz4pk2Sim1GS0Y2S1vr7NeVVlf+xgAVWnWXf6VTSZb/BtGM+hNbHCzvKVlFrUiPztQA1vxoH91PYOENJTm9gvd+1a4ulgvuevPMc7DUxIWPR3zuL+S6Ln7Yr5eom9llGrkqp3H8Ote7CEQEg5oX6dwaKrUWAeEPwz61DPygZNaBWtf9GEnvUJEpbVNXspl7f0xtyFceeZ9cjEI295ZkeArlY4dm6p+Roe0/UsDHPAQdhavRQwclZQJ9b2KNzV+Mu/DlXsv+sDESSK+m/KUVQR9ReHyBRzQAfJky8oOuLEnm4wXrf/ZGYPa3X2U+Xorgwf+GZ+l2j3wZYN9HZvY0hlrSt8IPJl2W2uUQKoHdjvp/QfGaTOwaVaIXo7pg2SXkVy27b9Ee8JFMbieHxLUrFER3abpZFaj7dZ+Gn7hy47eY92xawjpBIIZttoCiqpc/2M0ifljx5AbMueHnbSly/d8olXUmwJjWRjpfbLJOJOpoNlPhImfcIAr7e0CyCUCrR7+VZEslKBgcLBR8tWEVeeOxF2fN0WhGBpB518=
   on:
