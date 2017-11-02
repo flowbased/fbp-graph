@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/flowbased/fbp-graph#readme",
   "engines": {
-    "node": ">= 7.6"
+    "node": ">= 6"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
