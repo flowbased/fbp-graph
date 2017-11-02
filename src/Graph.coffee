@@ -23,7 +23,6 @@ class Graph extends EventEmitter
   nodes: []
   edges: []
   initializers: []
-  exports: []
   inports: {}
   outports: {}
   groups: []
@@ -41,7 +40,6 @@ class Graph extends EventEmitter
     @nodes = []
     @edges = []
     @initializers = []
-    @exports = []
     @inports = {}
     @outports = {}
     @groups = []
@@ -95,43 +93,6 @@ class Graph extends EventEmitter
     for item, val of properties
       @properties[item] = val
     @emit 'changeProperties', @properties, before
-    @checkTransactionEnd()
-
-  # ## Exporting a port from subgraph
-  #
-  # This allows subgraphs to expose a cleaner API by having reasonably
-  # named ports shown instead of all the free ports of the graph
-  #
-  # The ports exported using this way are ambiguous in their direciton. Use
-  # `addInport` or `addOutport` instead to disambiguate.
-  addExport: (publicPort, nodeKey, portKey, metadata = {x:0,y:0}) ->
-    platform.deprecated 'fbp-graph.Graph exports is deprecated: please use specific inport or outport instead'
-    # Check that node exists
-    return unless @getNode nodeKey
-
-    @checkTransactionStart()
-
-    exported =
-      public: @getPortName publicPort
-      process: nodeKey
-      port: @getPortName portKey
-      metadata: metadata
-    @exports.push exported
-    @emit 'addExport', exported
-
-    @checkTransactionEnd()
-
-  removeExport: (publicPort) ->
-    platform.deprecated 'fbp-graph.Graph exports is deprecated: please use specific inport or outport instead'
-    publicPort = @getPortName publicPort
-    found = null
-    for exported, idx in @exports
-      found = exported if exported.public is publicPort
-
-    return unless found
-    @checkTransactionStart()
-    @exports.splice @exports.indexOf(found), 1
-    @emit 'removeExport', found
     @checkTransactionEnd()
 
   addInport: (publicPort, nodeKey, portKey, metadata) ->
@@ -344,13 +305,6 @@ class Graph extends EventEmitter
       @removeInitial initializer.to.node, initializer.to.port
 
     toRemove = []
-    for exported in @exports
-      if @getPortName(id) is exported.process
-        toRemove.push exported
-    for exported in toRemove
-      @removeExport exported.public
-
-    toRemove = []
     for pub, priv of @inports
       if priv.process is id
         toRemove.push pub
@@ -418,9 +372,6 @@ class Graph extends EventEmitter
     for pub, priv of @outports
       if priv.process is oldId
         priv.process = newId
-    for exported in @exports
-      if exported.process is oldId
-        exported.process = newId
 
     for group in @groups
       continue unless group
@@ -743,11 +694,6 @@ class Graph extends EventEmitter
     for pub, priv of @outports
       json.outports[pub] = priv
 
-    # Legacy exported ports
-    for exported in @exports
-      json.exports = [] unless json.exports
-      json.exports.push exported
-
     for group in @groups
       groupData =
         name: group.name
@@ -832,24 +778,6 @@ exports.loadJSON = (definition, callback, metadata = {}) ->
       continue
     graph.addEdge conn.src.process, graph.getPortName(conn.src.port), conn.tgt.process, graph.getPortName(conn.tgt.port), metadata
 
-  if definition.exports and definition.exports.length
-    for exported in definition.exports
-      if exported.private
-        # Translate legacy ports to new
-        split = exported.private.split('.')
-        continue unless split.length is 2
-        processId = split[0]
-        portId = split[1]
-
-        # Get properly cased process id
-        for id of definition.processes
-          if graph.getPortName(id) is graph.getPortName(processId)
-            processId = id
-      else
-        processId = exported.process
-        portId = graph.getPortName exported.port
-      graph.addExport exported.public, processId, portId, exported.metadata
-
   if definition.inports
     for pub, priv of definition.inports
       graph.addInport pub, priv.process, graph.getPortName(priv.port), priv.metadata
@@ -914,8 +842,6 @@ resetGraph = (graph) ->
     graph.removeOutport port
   for port, v of clone graph.inports
     graph.removeInport port
-  for exp in clone (graph.exports).reverse()
-    graph.removeExport exp.public
   # XXX: does this actually null the props??
   graph.setProperties {}
   for iip in (clone graph.initializers).reverse()
@@ -936,8 +862,6 @@ mergeResolveTheirsNaive = (base, to) ->
     base.addEdge edge.from.node, edge.from.port, edge.to.node, edge.to.port, edge.metadata
   for iip in to.initializers
     base.addInitial iip.from.data, iip.to.node, iip.to.port, iip.metadata
-  for exp in to.exports
-    base.addExport exp.public, exp.node, exp.port, exp.metadata
   base.setProperties to.properties
   for pub, priv of to.inports
     base.addInport pub, priv.process, priv.port, priv.metadata

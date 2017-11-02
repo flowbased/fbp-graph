@@ -22,7 +22,6 @@ describe 'FBP Graph', ->
     it 'should have no initializers initially', ->
       chai.expect(g.initializers.length).to.equal 0
     it 'should have no exports initially', ->
-      chai.expect(g.exports.length).to.equal 0
       chai.expect(g.inports).to.be.empty
       chai.expect(g.outports).to.be.empty
 
@@ -362,12 +361,6 @@ describe 'FBP Graph', ->
         for edge in g.initializers
           iip = edge if edge.to.node is 'Foo'
         chai.expect(iip).to.be.a 'null'
-      it 'shouldn\'t be have export going to the old name', ->
-        exports = 0
-        for exported in g.exports
-          [exportedNode, exportedPort] = exported.private.split '.'
-          exports++ if exportedNode is 'foo'
-        chai.expect(exports).to.equal 0
       it 'shouldn\'t be grouped with the old name', ->
         groups = 0
         for group in g.groups
@@ -412,12 +405,6 @@ describe 'FBP Graph', ->
         for edge in g.initializers
           connections++ if edge.to.node is 'Baz'
         chai.expect(connections).to.equal 0
-      it 'shouldn\'t have exports left behind', ->
-        exports = 0
-        for exported in g.exports
-          [exportedNode, exportedPort] = exported.private.split '.'
-          exports++ if exportedNode is 'baz'
-        chai.expect(exports).to.equal 0
       it 'shouldn\'t be grouped', ->
         groups = 0
         for group in g.groups
@@ -546,52 +533,6 @@ describe 'FBP Graph', ->
       g.addInitial 'Hello', 'Bar', 'in'
       chai.expect(g.initializers).to.be.empty
 
-  describe 'Legacy exports loaded via JSON', ->
-    jsonString = """
-{
-  "caseSensitive": true,
-  "exports": [
-    {
-      "public": "in",
-      "private": "Foo.in",
-      "metadata": {
-        "x": 5,
-        "y": 100
-      }
-    },
-    {
-      "public": "out",
-      "private": "Bar.out"
-    }
-  ],
-  "processes": {
-    "Foo": {
-      "component": "Foooo"
-    },
-    "Bar": {
-      "component": "Baaar"
-    }
-  }
-}
-    """
-    json = JSON.parse(jsonString)
-    g = null
-    it 'should produce a Graph', (done) ->
-      lib.graph.loadJSON json, (err, instance) ->
-        return done err if err
-        g = instance
-        chai.expect(g).to.be.an 'object'
-        done()
-
-    it 'should have two legacy exports', (done) ->
-      chai.expect(g.exports).to.be.an 'array'
-      chai.expect(g.exports.length).to.equal 2
-      done()
-    it 'should fix the case of the process key', (done) ->
-      chai.expect(g.exports[0].process).to.equal 'Foo'
-      chai.expect(g.exports[1].process).to.equal 'Bar'
-      done()
-
 describe 'Case Insensitive Graph', ->
 
   describe 'Graph operations should convert port names to lowercase', ->
@@ -617,52 +558,3 @@ describe 'Case Insensitive Graph', ->
         g.removeEdge 'Foo', 'outPut', 'Bar', 'inPut'
 
       g.addEdge 'Foo', 'outPut', 'Bar', 'inPut'
-
-  describe 'Legacy exports loaded via JSON', ->
-    jsonString = """
-      {
-        "exports": [
-          {
-            "public": "in",
-            "private": "foo.in",
-            "metadata": {
-              "x": 5,
-              "y": 100
-            }
-          },
-          {
-            "public": "out",
-            "private": "bar.out"
-          }
-        ],
-        "processes": {
-          "Foo": {
-            "component": "Foooo"
-          },
-          "Bar": {
-            "component": "Baaar"
-          }
-        }
-      }
-    """
-    json = JSON.parse(jsonString)
-    g = null
-
-    it 'should produce a Graph', (done) ->
-      lib.graph.loadJSON json, (err, instance) ->
-        return done err if err
-        g = instance
-        chai.expect(g).to.be.an 'object'
-        chai.expect(g.caseSensitive).to.equal false
-        done()
-
-    describe 'legacy exports with case sensitivity turned off', ->
-      it 'should have two legacy exports', (done) ->
-        chai.expect(g.exports).to.be.an 'array'
-        chai.expect(g.exports.length).to.equal 2
-        done()
-      it 'should fix the case of the process key', (done) ->
-        chai.expect(g.exports[0].process).to.equal 'Foo'
-        chai.expect(g.exports[1].process).to.equal 'Bar'
-        done()
-
