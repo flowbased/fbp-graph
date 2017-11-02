@@ -51,7 +51,9 @@ calculateMeta = (oldMeta, newMeta) ->
 
 class JournalStore extends EventEmitter
   lastRevision: 0
-  constructor: (@graph) ->
+  constructor: (graph) ->
+    super()
+    @graph = graph
     @lastRevision = 0
   putTransaction: (revId, entries) ->
     @lastRevision = revId if revId > @lastRevision
@@ -84,6 +86,7 @@ class Journal extends EventEmitter
   subscribed: true # Whether we should respond to graph change notifications or not
 
   constructor: (graph, metadata, store) ->
+    super()
     @graph = graph
     @entries = []
     @subscribed = true

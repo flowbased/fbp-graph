@@ -4,7 +4,7 @@
   "description": "JavaScript FBP graph library",
   "main": "index.js",
   "scripts": {
-    "test": "grunt test"
+    "test": "nyc grunt test"
   },
   "repository": {
     "type": "git",
@@ -20,23 +20,36 @@
     "url": "https://github.com/flowbased/fbp-graph/issues"
   },
   "homepage": "https://github.com/flowbased/fbp-graph#readme",
+  "engines": {
+    "node": ">= 6"
+  },
   "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-es2015": "^6.24.1",
     "chai": "^4.0.1",
-    "coffee-loader": "^0.7.2",
-    "coffee-script": "^1.12.2",
+    "coffee-loader": "^0.9.0",
+    "coffeescript": "^2.0.2",
+    "coveralls": "^3.0.0",
     "fbp-loader": "^0.1.1",
     "grunt": "^1.0.1",
     "grunt-coffeelint": "0.0.16",
-    "grunt-contrib-coffee": "^1.0.0",
+    "grunt-contrib-coffee": "^2.0.0",
     "grunt-contrib-connect": "^1.0.2",
     "grunt-mocha-phantomjs": "^4.0.0",
     "grunt-mocha-test": "^0.13.2",
     "grunt-noflo-browser": "^1.4.0",
     "json-loader": "^0.5.4",
-    "mocha": "^4.0.0"
+    "mocha": "^4.0.0",
+    "nyc": "^11.3.0"
   },
   "dependencies": {
     "clone": "^2.1.0",
     "fbp": "^1.5.0"
+  },
+  "nyc": {
+    "include": [
+      "lib/*.js"
+    ]
   }
 }
