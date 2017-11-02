@@ -5,3 +5,4 @@ spec/*.js
 spec/result.xml
 npm-debug.log
 .DS_Store
+/.nyc_output/
