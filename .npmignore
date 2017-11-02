@@ -1,3 +1,5 @@
 .git*
 /components/*/
 /browser/
+/spec/*.js
+/spec/*.xml
