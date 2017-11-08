@@ -1,8 +1,10 @@
 if typeof process isnt 'undefined' and process.execPath and process.execPath.match /node|iojs/
   chai = require 'chai' unless chai
   lib = require '../index'
+  browser = false
 else
   lib = require 'fbp-graph'
+  browser = true
 
 describe 'FBP Graph', ->
   describe 'Unnamed graph instance', ->
@@ -532,6 +534,52 @@ describe 'FBP Graph', ->
     it 'should not allow adding IIPs', ->
       g.addInitial 'Hello', 'Bar', 'in'
       chai.expect(g.initializers).to.be.empty
+
+  describe 'saving and loading files', ->
+    describe 'with .json suffix', ->
+      originalGraph = null
+      graphPath = null
+      before ->
+        return @skip() if browser
+        path = require 'path'
+        graphPath = path.resolve __dirname, 'foo.json'
+      after (done) ->
+        return done() if browser
+        fs = require 'fs'
+        fs.unlink graphPath, done
+      it 'should be possible to save a graph to a file', (done) ->
+        g = new lib.graph.Graph
+        g.addNode 'Foo', 'Bar'
+        originalGraph = g.toJSON()
+        g.save graphPath, done
+      it 'should be possible to load a graph from a file', (done) ->
+        lib.graph.loadFile graphPath, (err, g) ->
+          return done err if err
+          chai.expect(g.toJSON()).to.eql originalGraph
+          done()
+    describe 'without .json suffix', ->
+      graphPathLegacy = null
+      graphPathLegacySuffix = null
+      originalGraph = null
+      before ->
+        return @skip() if browser
+        path = require 'path'
+        graphPathLegacy = path.resolve __dirname, 'bar'
+        graphPathLegacySuffix = path.resolve __dirname, 'bar.json'
+      after (done) ->
+        return done() if browser
+        fs = require 'fs'
+        fs.unlink graphPathLegacySuffix, done
+      it 'should be possible to save a graph to a file', (done) ->
+        g = new lib.graph.Graph
+        g.addNode 'Foo', 'Bar'
+        originalGraph = g.toJSON()
+        g.save graphPathLegacy, done
+      it 'should be possible to load a graph from a file', (done) ->
+        lib.graph.loadFile graphPathLegacySuffix, (err, g) ->
+          return done err if err
+          chai.expect(g.toJSON()).to.eql originalGraph
+          done()
 
 describe 'Case Insensitive Graph', ->
 
