@@ -736,7 +736,9 @@ class Graph extends EventEmitter
       return callback new Error "Saving graphs not supported on browser"
 
     json = JSON.stringify @toJSON(), null, 4
-    require('fs').writeFile "#{file}.json", json, "utf-8", (err, data) ->
+    unless file.match /\.json$/
+      file = "#{file}.json"
+    require('fs').writeFile file, json, "utf-8", (err, data) ->
       return callback err if err
       callback null, file
 
