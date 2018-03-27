@@ -35,6 +35,7 @@ class Graph extends EventEmitter
   #     myGraph = new Graph 'My very cool graph'
   constructor: (name = '', options = {}) ->
     super()
+    @setMaxListeners 0
     @name = name
     @properties = {}
     @nodes = []
