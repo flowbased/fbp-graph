@@ -1,6 +1,6 @@
 {
   "name": "fbp-graph",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "JavaScript FBP graph library",
   "main": "index.js",
   "scripts": {
