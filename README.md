@@ -19,7 +19,7 @@ npm install fbp-graph --save
 Load a graph definition into an object. Loading graph definitions works with both JSON and FBP formatted graphs.
 
 ```javascript
-var fbpGraph = require('fbp-graph');
-fbpGraph.graph.loadFile('some/path.json',{}, function (err, graph) {
+const fbpGraph = require('fbp-graph');
+fbpGraph.graph.loadFile('some/path.json', {}, (err, graph) => {
 });
 ```
