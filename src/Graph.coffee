@@ -748,8 +748,12 @@ exports.Graph = Graph
 exports.createGraph = (name, options) ->
   new Graph name, options
 
-exports.loadJSON = (definition, callback, metadata = {}) ->
-  definition = JSON.parse definition if typeof definition is 'string'
+exports.loadJSON = (passedDefinition, callback, metadata = {}) ->
+  if typeof passedDefinition is 'string'
+    definition = JSON.parse passedDefinition
+  else
+    definition = JSON.parse JSON.stringify passedDefinition
+
   definition.properties = {} unless definition.properties
   definition.processes = {} unless definition.processes
   definition.connections = [] unless definition.connections
