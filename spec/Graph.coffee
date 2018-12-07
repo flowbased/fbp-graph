@@ -233,12 +233,41 @@ describe 'FBP Graph', ->
     """
     json = JSON.parse(jsonString)
     g = null
-    it 'should produce a Graph', (done) ->
+
+    it 'should produce a Graph when input is string', (done) ->
+      lib.graph.loadJSON jsonString, (err, instance) ->
+        return done err if err
+        g = instance
+        chai.expect(g).to.be.an 'object'
+        done()
+
+    it 'should produce a Graph when input is json', (done) ->
       lib.graph.loadJSON json, (err, instance) ->
         return done err if err
         g = instance
         chai.expect(g).to.be.an 'object'
         done()
+        
+    it 'should not mutate the inputted json object', (done) ->
+      chai.expect(Object.keys(json.processes).length).to.equal(4)
+      lib.graph.loadJSON json, (err, instance) ->
+        return done err if err
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+        instance.addNode 'Split1', 'Split'
+
+        chai.expect(Object.keys(json.processes).length).to.equal(4)
+        console.log(json)
+        done()
+
     it 'should have a name', ->
       chai.expect(g.name).to.equal 'Example'
     it 'should have graph metadata intact', ->
