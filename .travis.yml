@@ -1,7 +1,7 @@
 language: node_js
 sudo: false
 node_js:
-- 'lts/*'
+- lts/*
 after_success:
 - "./node_modules/.bin/nyc report --reporter=text-lcov | ./node_modules/.bin/coveralls"
 deploy:
@@ -9,7 +9,7 @@ deploy:
   email: henri.bergius@iki.fi
   skip_cleanup: true
   api_key:
-    secure: BgwDjY040enUUuVJx0VnlQ0lI68QOI++rfBjQUqPV7ecR9I12D+9QAW67upJmr5fipCc2NIbXzEKhQt0pOD5/QlU+lrzf84Rx8X1KysZYt8XDg5pgaEJtVpI47AMgLeORVFuYVzz4pk2Sim1GS0Y2S1vr7NeVVlf+xgAVWnWXf6VTSZb/BtGM+hNbHCzvKVlFrUiPztQA1vxoH91PYOENJTm9gvd+1a4ulgvuevPMc7DUxIWPR3zuL+S6Ln7Yr5eom9llGrkqp3H8Ote7CEQEg5oX6dwaKrUWAeEPwz61DPygZNaBWtf9GEnvUJEpbVNXspl7f0xtyFceeZ9cjEI295ZkeArlY4dm6p+Roe0/UsDHPAQdhavRQwclZQJ9b2KNzV+Mu/DlXsv+sDESSK+m/KUVQR9ReHyBRzQAfJky8oOuLEnm4wXrf/ZGYPa3X2U+Xorgwf+GZ+l2j3wZYN9HZvY0hlrSt8IPJl2W2uUQKoHdjvp/QfGaTOwaVaIXo7pg2SXkVy27b9Ee8JFMbieHxLUrFER3abpZFaj7dZ+Gn7hy47eY92xawjpBIIZttoCiqpc/2M0ifljx5AbMueHnbSly/d8olXUmwJjWRjpfbLJOJOpoNlPhImfcIAr7e0CyCUCrR7+VZEslKBgcLBR8tWEVeeOxF2fN0WhGBpB518=
+    secure: jj0xahH8OPIRdM95l/b1KENIC++WpeZtiE0w2ATKDBrCYyUD+KBVaAHeme3hTc/3mclGQINVY9WHjcadtJmcYhbRS8wXO61q3ryeWrDnXUgjLhJ6M2XbR9u1PA3RuTrjHnZzySBanaHlytCtQWj/tdVqlsvL2VoZFAhYFqqO3ha0/ViTZOhA299ieCC4dqEwP3gKSEja1du8dfYbmDKLbehS+Lxw8z45PcUiQ3FN4hE4Qe+gqpOOY20rWRaiiH2Gt1f2SOKokUadBX2sWoK9/Pxgsd37egECb30zJp/fAf2XaErBVLtkj+9wo37yzwKMUfNK2b5JygLxlzGW+p57I/3mWiTijifjlCNCWvS3RFdVaDqv5y3WciAE2rTYgAJQTLPSUcdVhUS5XzzsF9oNYHZHsqzTnXvyfyRGH4tKZIZeIJJ2XAe3KZLxbI/79C+v4bDBYc2ElrThfunEtngg9ZDpnHLrqR6lBxb1LUQgs9cL8UvaOcAs1ceHaZ1UAV1Mx8yRAoQkH8YJKC8kDD2tdIPAFQ+oqvR5nftnp2Opv4Z2eH08/NTef/EmhSJIFq/9vjj7hGTmG/b7a5stdxlDNtfY0koWnR0Mjv92X7obg+sygBw5vNuW7eTmxMagDj3rEFZ194wlr2JPr3ipW/4ex9PCFk2ffYI9OnWec+EDIhI=
   on:
     tags: true
     repo: flowbased/fbp-graph
