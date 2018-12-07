@@ -4,5 +4,6 @@
 spec/*.js
 spec/result.xml
 npm-debug.log
+package-lock.json
 .DS_Store
 /.nyc_output/
