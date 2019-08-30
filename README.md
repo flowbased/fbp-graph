@@ -20,7 +20,7 @@ Load a graph definition into an object. Loading graph definitions works with bot
 
 ```javascript
 const fbpGraph = require('fbp-graph');
-fbpGraph.graph.loadFile('some/path.json', {}, (err, graph) => {
+fbpGraph.graph.loadFile('some/path.json', (err, graph) => {
   // Do something with the graph object
 });
 ```
