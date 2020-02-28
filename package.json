@@ -24,7 +24,7 @@
     "node": ">= 6"
   },
   "devDependencies": {
-    "@babel/core": "^7.2.0",
+    "@babel/core": "^7.8.6",
     "@babel/preset-env": "^7.2.0",
     "babel-loader": "^8.0.4",
     "chai": "^4.0.1",
