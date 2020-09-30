@@ -641,26 +641,26 @@ class Graph extends EventEmitter
     @removeInitial inport.process, inport.port
 
   toDOT: ->
-    cleanID = (id) ->
-      id.replace /\s*/g, ""
+    wrapQuotes = (id) ->
+      "\"#{id.replace /"/g, '\\"'}\""
     cleanPort = (port) ->
       port.replace /\./g, ""
 
     dot = "digraph {\n"
 
     for node in @nodes
-      dot += "    #{cleanID(node.id)} [label=#{node.id} shape=box]\n"
+      dot += "    #{wrapQuotes(node.id)} [label=#{wrapQuotes(node.id)} shape=box]\n"
 
     for initializer, id in @initializers
       if typeof initializer.from.data is 'function'
         data = 'Function'
       else
-        data = initializer.from.data
-      dot += "    data#{id} [label=\"'#{data}'\" shape=plaintext]\n"
-      dot += "    data#{id} -> #{cleanID(initializer.to.node)}[headlabel=#{cleanPort(initializer.to.port)} labelfontcolor=blue labelfontsize=8.0]\n"
+        data = JSON.stringify initializer.from.data
+      dot += "    data#{id} [label=#{wrapQuotes(data)} shape=plaintext]\n"
+      dot += "    data#{id} -> #{wrapQuotes(initializer.to.node)}[headlabel=#{cleanPort(initializer.to.port)} labelfontcolor=blue labelfontsize=8.0]\n"
 
     for edge in @edges
-      dot += "    #{cleanID(edge.from.node)} -> #{cleanID(edge.to.node)}[taillabel=#{cleanPort(edge.from.port)} headlabel=#{cleanPort(edge.to.port)} labelfontcolor=blue labelfontsize=8.0]\n"
+      dot += "    #{wrapQuotes(edge.from.node)} -> #{wrapQuotes(edge.to.node)}[taillabel=#{cleanPort(edge.from.port)} headlabel=#{cleanPort(edge.to.port)} labelfontcolor=blue labelfontsize=8.0]\n"
 
     dot += "}"
 
