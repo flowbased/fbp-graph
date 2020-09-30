@@ -49,20 +49,11 @@ module.exports = ->
           require: 'coffeescript/register'
           grep: process.env.TESTS
 
-    # Web server for the browser tests
-    connect:
-      server:
-        options:
-          port: 8000
-
     # BDD tests on browser
-    mocha_phantomjs:
-      all:
-        options:
-          output: 'spec/result.xml'
-          reporter: 'spec'
-          urls: ['http://localhost:8000/spec/runner.html']
-          failWithOutput: true
+    karma:
+      unit:
+        configFile: 'karma.config.js'
+
 
     # Coding standards
     coffeelint:
@@ -79,9 +70,8 @@ module.exports = ->
   @loadNpmTasks 'grunt-noflo-browser'
 
   # Grunt plugins used for testing
-  @loadNpmTasks 'grunt-contrib-connect'
   @loadNpmTasks 'grunt-mocha-test'
-  @loadNpmTasks 'grunt-mocha-phantomjs'
+  @loadNpmTasks 'grunt-karma'
   @loadNpmTasks 'grunt-coffeelint'
 
   # Our local tasks
@@ -96,7 +86,6 @@ module.exports = ->
     if target is 'all' or target is 'nodejs'
       @task.run 'mochaTest'
     if target is 'all' or target is 'browser'
-      @task.run 'connect'
-      @task.run 'mocha_phantomjs'
+      @task.run 'karma'
 
   @registerTask 'default', ['test']
