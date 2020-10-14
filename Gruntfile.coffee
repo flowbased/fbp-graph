@@ -26,16 +26,6 @@ module.exports = ->
     noflo_browser:
       options:
         baseDir: './'
-        webpack:
-          module:
-            rules: [
-              test: /\.js$/,
-              use: [
-                loader: 'babel-loader'
-                options:
-                  presets: ['@babel/preset-env']
-              ]
-            ]
       build:
         files:
           'browser/fbp-graph.js': ['webpack.entry.js']
