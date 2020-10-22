@@ -1,10 +1,4 @@
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * DS207: Consider shorter variations of null checks
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-module.exports = function() {
+module.exports = function () {
   // Project configuration
   this.initConfig({
     pkg: this.file.readJSON('package.json'),
@@ -12,13 +6,13 @@ module.exports = function() {
     // Browser build
     noflo_browser: {
       options: {
-        baseDir: './'
+        baseDir: './',
       },
       build: {
         files: {
-          'browser/fbp-graph.js': ['webpack.entry.js']
-        }
-      }
+          'browser/fbp-graph.js': ['webpack.entry.js'],
+        },
+      },
     },
 
     // BDD tests on Node.js
@@ -27,16 +21,16 @@ module.exports = function() {
         src: ['spec/*.js'],
         options: {
           reporter: 'spec',
-          grep: process.env.TESTS
-        }
-      }
+          grep: process.env.TESTS,
+        },
+      },
     },
 
     // BDD tests on browser
     karma: {
       unit: {
-        configFile: 'karma.config.js'
-      }
+        configFile: 'karma.config.js',
+      },
     },
   });
 
@@ -48,23 +42,21 @@ module.exports = function() {
   this.loadNpmTasks('grunt-karma');
 
   // Our local tasks
-  this.registerTask('build', 'Build for the chosen target platform', target => {
-    if (target == null) { target = 'all'; }
+  this.registerTask('build', 'Build for the chosen target platform', (target = 'all') => {
     if ((target === 'all') || (target === 'browser')) {
-      return this.task.run('noflo_browser');
+      this.task.run('noflo_browser');
     }
   });
 
-  this.registerTask('test', 'Build and run automated tests', target => {
-    if (target == null) { target = 'all'; }
+  this.registerTask('test', 'Build and run automated tests', (target = 'all') => {
     this.task.run(`build:${target}`);
     if ((target === 'all') || (target === 'nodejs')) {
       this.task.run('mochaTest');
     }
     if ((target === 'all') || (target === 'browser')) {
-      return this.task.run('karma');
+      this.task.run('karma');
     }
   });
 
-  return this.registerTask('default', ['test']);
+  this.registerTask('default', ['test']);
 };

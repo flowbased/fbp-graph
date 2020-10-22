@@ -1,126 +1,131 @@
-/*
- * decaffeinate suggestions:
- * DS101: Remove unnecessary use of Array.from
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-let browser, chai, lib;
+let browser; let chai; let lib;
 if ((typeof process !== 'undefined') && process.execPath && process.execPath.match(/node|iojs/)) {
+  // eslint-disable-next-line global-require
   if (!chai) { chai = require('chai'); }
+  // eslint-disable-next-line global-require
   lib = require('../index');
   browser = false;
 } else {
+  // eslint-disable-next-line global-require,import/no-unresolved
   lib = require('fbp-graph');
   browser = true;
 }
 
-describe('FBP Graph', function() {
-  describe('Unnamed graph instance', () => it('should have an empty name', function() {
-    const g = new lib.graph.Graph;
-    return chai.expect(g.name).to.equal('');
+describe('FBP Graph', () => {
+  describe('Unnamed graph instance', () => it('should have an empty name', () => {
+    const g = new lib.graph.Graph();
+    chai.expect(g.name).to.equal('');
   }));
-  describe('with new instance', function() {
+  describe('with new instance', () => {
     let g = null;
-    it('should get a name from constructor', function() {
-      g = new lib.graph.Graph('Foo bar', {caseSensitive: true});
-      return chai.expect(g.name).to.equal('Foo bar');
+    it('should get a name from constructor', () => {
+      g = new lib.graph.Graph('Foo bar', { caseSensitive: true });
+      chai.expect(g.name).to.equal('Foo bar');
     });
 
-    it('should have no nodes initially', () => chai.expect(g.nodes.length).to.equal(0));
-    it('should have no edges initially', () => chai.expect(g.edges.length).to.equal(0));
-    it('should have no initializers initially', () => chai.expect(g.initializers.length).to.equal(0));
-    it('should have no exports initially', function() {
-      chai.expect(g.inports).to.be.empty;
-      return chai.expect(g.outports).to.be.empty;
+    it('should have no nodes initially', () => {
+      chai.expect(g.nodes).to.eql([]);
+    });
+    it('should have no edges initially', () => {
+      chai.expect(g.edges).to.eql([]);
+    });
+    it('should have no initializers initially', () => {
+      chai.expect(g.initializers).to.eql([]);
+    });
+    it('should have no inports initially', () => {
+      chai.expect(g.inports).to.eql({});
+    });
+    it('should have no outports initially', () => {
+      chai.expect(g.outports).to.eql({});
     });
 
-    describe('New node', function() {
+    describe('New node', () => {
       let n = null;
-      it('should emit an event', function(done) {
-        g.once('addNode', function(node) {
+      it('should emit an event', (done) => {
+        g.once('addNode', (node) => {
           chai.expect(node.id).to.equal('Foo');
           chai.expect(node.component).to.equal('Bar');
           n = node;
-          return done();
+          done();
         });
-        return g.addNode('Foo', 'Bar');
+        g.addNode('Foo', 'Bar');
       });
-      it('should be in graph\'s list of nodes', function() {
+      it('should be in graph\'s list of nodes', () => {
         chai.expect(g.nodes.length).to.equal(1);
-        return chai.expect(g.nodes.indexOf(n)).to.equal(0);
+        chai.expect(g.nodes.indexOf(n)).to.equal(0);
       });
-      it('should be accessible via the getter', function() {
+      it('should be accessible via the getter', () => {
         const node = g.getNode('Foo');
         chai.expect(node.id).to.equal('Foo');
-        return chai.expect(node).to.equal(n);
+        chai.expect(node).to.equal(n);
       });
-      it('should have empty metadata', function() {
+      it('should have empty metadata', () => {
         const node = g.getNode('Foo');
         chai.expect(JSON.stringify(node.metadata)).to.equal('{}');
-        return chai.expect(node.display).to.equal(undefined);
+        chai.expect(node.display).to.equal(undefined);
       });
-      it('should be available in the JSON export', function() {
+      it('should be available in the JSON export', () => {
         const json = g.toJSON();
         chai.expect(typeof json.processes.Foo).to.equal('object');
         chai.expect(json.processes.Foo.component).to.equal('Bar');
-        return chai.expect(json.processes.Foo.display).to.not.exist;
+        chai.expect(json.processes.Foo.display).to.be('undefined');
       });
-      it('removing should emit an event', function(done) {
-        g.once('removeNode', function(node) {
+      it('removing should emit an event', (done) => {
+        g.once('removeNode', (node) => {
           chai.expect(node.id).to.equal('Foo');
           chai.expect(node).to.equal(n);
-          return done();
+          done();
         });
-        return g.removeNode('Foo');
+        g.removeNode('Foo');
       });
-      return it('should not be available after removal', function() {
+      it('should not be available after removal', () => {
         const node = g.getNode('Foo');
-        chai.expect(node).to.not.exist;
+        chai.expect(node).to.be.a('null');
         chai.expect(g.nodes.length).to.equal(0);
-        return chai.expect(g.nodes.indexOf(n)).to.equal(-1);
+        chai.expect(g.nodes.indexOf(n)).to.equal(-1);
       });
     });
-    describe('New edge', function() {
-      it('should emit an event', function(done) {
+    describe('New edge', () => {
+      it('should emit an event', (done) => {
         g.addNode('Foo', 'foo');
         g.addNode('Bar', 'bar');
-        g.once('addEdge', function(edge) {
+        g.once('addEdge', (edge) => {
           chai.expect(edge.from.node).to.equal('Foo');
           chai.expect(edge.to.port).to.equal('In');
-          return done();
+          done();
         });
-        return g.addEdge('Foo', 'Out', 'Bar', 'In');
+        g.addEdge('Foo', 'Out', 'Bar', 'In');
       });
-      it('should add an edge', function() {
+      it('should add an edge', () => {
         g.addEdge('Foo', 'out', 'Bar', 'in2');
-        return chai.expect(g.edges.length).equal(2);
+        chai.expect(g.edges.length).equal(2);
       });
-      return it('should refuse to add a duplicate edge', function() {
+      it('should refuse to add a duplicate edge', () => {
         const edge = g.edges[0];
         g.addEdge(edge.from.node, edge.from.port, edge.to.node, edge.to.port);
-        return chai.expect(g.edges.length).equal(2);
+        chai.expect(g.edges.length).equal(2);
       });
     });
-    return describe('New edge with index', function() {
-      it('should emit an event', function(done) {
-        g.once('addEdge', function(edge) {
+    describe('New edge with index', () => {
+      it('should emit an event', (done) => {
+        g.once('addEdge', (edge) => {
           chai.expect(edge.from.node).to.equal('Foo');
           chai.expect(edge.to.port).to.equal('in');
           chai.expect(edge.to.index).to.equal(1);
           chai.expect(edge.from.index).to.be.an('undefined');
           chai.expect(g.edges.length).equal(3);
-          return done();
+          done();
         });
-        return g.addEdgeIndex('Foo', 'out', null, 'Bar', 'in', 1);
+        g.addEdgeIndex('Foo', 'out', null, 'Bar', 'in', 1);
       });
-      return it('should add an edge', function() {
+      it('should add an edge', () => {
         g.addEdgeIndex('Foo', 'out', 2, 'Bar', 'in2');
-        return chai.expect(g.edges.length).equal(4);
+        chai.expect(g.edges.length).equal(4);
       });
     });
   });
 
-  describe('loaded from JSON (with case sensitive port names)', function() {
+  describe('loaded from JSON (with case sensitive port names)', () => {
     const jsonString = `\
 {
   "caseSensitive": true,
@@ -261,24 +266,33 @@ describe('FBP Graph', function() {
     const json = JSON.parse(jsonString);
     let g = null;
 
-    it('should produce a Graph when input is string', done => lib.graph.loadJSON(jsonString, function(err, instance) {
-      if (err) { return done(err); }
+    it('should produce a Graph when input is string', (done) => lib.graph.loadJSON(jsonString, (err, instance) => {
+      if (err) {
+        done(err);
+        return;
+      }
       g = instance;
       chai.expect(g).to.be.an('object');
-      return done();
+      done();
     }));
 
-    it('should produce a Graph when input is json', done => lib.graph.loadJSON(json, function(err, instance) {
-      if (err) { return done(err); }
+    it('should produce a Graph when input is json', (done) => lib.graph.loadJSON(json, (err, instance) => {
+      if (err) {
+        done(err);
+        return;
+      }
       g = instance;
       chai.expect(g).to.be.an('object');
-      return done();
+      done();
     }));
-        
-    it('should not mutate the inputted json object', function(done) {
+
+    it('should not mutate the inputted json object', (done) => {
       chai.expect(Object.keys(json.processes).length).to.equal(4);
-      return lib.graph.loadJSON(json, function(err, instance) {
-        if (err) { return done(err); }
+      lib.graph.loadJSON(json, (err, instance) => {
+        if (err) {
+          done(err);
+          return;
+        }
         instance.addNode('Split1', 'Split');
         instance.addNode('Split1', 'Split');
         instance.addNode('Split1', 'Split');
@@ -292,34 +306,33 @@ describe('FBP Graph', function() {
         instance.addNode('Split1', 'Split');
 
         chai.expect(Object.keys(json.processes).length).to.equal(4);
-        console.log(json);
-        return done();
+        done();
       });
     });
 
     it('should have a name', () => chai.expect(g.name).to.equal('Example'));
     it('should have graph metadata intact', () => chai.expect(g.properties).to.eql({
       foo: 'Baz',
-      bar: 'Foo'
+      bar: 'Foo',
     }));
     it('should produce same JSON when serialized', () => chai.expect(JSON.stringify(g.toJSON())).to.equal(JSON.stringify(json)));
-    it('should allow modifying graph metadata', function(done) {
-      g.once('changeProperties', function(properties) {
+    it('should allow modifying graph metadata', (done) => {
+      g.once('changeProperties', (properties) => {
         chai.expect(properties).to.equal(g.properties);
         chai.expect(g.properties).to.eql({
           foo: 'Baz',
           bar: 'Bar',
-          hello: 'World'
+          hello: 'World',
         });
-        return done();
+        done();
       });
-      return g.setProperties({
+      g.setProperties({
         hello: 'World',
-        bar: 'Bar'
+        bar: 'Bar',
       });
     });
     it('should contain four nodes', () => chai.expect(g.nodes.length).to.equal(4));
-    it('the first Node should have its metadata intact', function() {
+    it('the first Node should have its metadata intact', () => {
       const node = g.getNode('Foo');
       chai.expect(node.metadata).to.be.an('object');
       chai.expect(node.metadata.display).to.be.an('object');
@@ -327,187 +340,197 @@ describe('FBP Graph', function() {
       chai.expect(node.metadata.display.y).to.equal(200);
       chai.expect(node.metadata.routes).to.be.an('array');
       chai.expect(node.metadata.routes).to.contain('one');
-      return chai.expect(node.metadata.routes).to.contain('two');
+      chai.expect(node.metadata.routes).to.contain('two');
     });
-    it('should allow modifying node metadata', function(done) {
-      g.once('changeNode', function(node) {
+    it('should allow modifying node metadata', (done) => {
+      g.once('changeNode', (node) => {
         chai.expect(node.id).to.equal('Foo');
         chai.expect(node.metadata.routes).to.be.an('array');
         chai.expect(node.metadata.routes).to.contain('one');
         chai.expect(node.metadata.routes).to.contain('two');
         chai.expect(node.metadata.hello).to.equal('World');
-        return done();
+        done();
       });
-      return g.setNodeMetadata('Foo',
-        {hello: 'World'});
+      g.setNodeMetadata('Foo',
+        { hello: 'World' });
     });
     it('should contain two connections', () => chai.expect(g.edges.length).to.equal(2));
-    it('the first Edge should have its metadata intact', function() {
+    it('the first Edge should have its metadata intact', () => {
       const edge = g.edges[0];
       chai.expect(edge.metadata).to.be.an('object');
-      return chai.expect(edge.metadata.route).equal('foo');
+      chai.expect(edge.metadata.route).equal('foo');
     });
-    it('should allow modifying edge metadata', function(done) {
+    it('should allow modifying edge metadata', (done) => {
       const e = g.edges[0];
-      g.once('changeEdge', function(edge) {
+      g.once('changeEdge', (edge) => {
         chai.expect(edge).to.equal(e);
         chai.expect(edge.metadata.route).to.equal('foo');
         chai.expect(edge.metadata.hello).to.equal('World');
-        return done();
+        done();
       });
-      return g.setEdgeMetadata(e.from.node, e.from.port, e.to.node, e.to.port,
-        {hello: 'World'});
+      g.setEdgeMetadata(e.from.node, e.from.port, e.to.node, e.to.port,
+        { hello: 'World' });
     });
-    it('should contain four IIPs', () => chai.expect(g.initializers.length).to.equal(4));
-    it('should contain one published inport', () => chai.expect(g.inports).to.not.be.empty);
-    it('should contain one published outport', () => chai.expect(g.outports).to.not.be.empty);
-    it('should keep the output export metadata intact', function() {
+    it('should contain four IIPs', () => {
+      chai.expect(g.initializers.length).to.equal(4);
+    });
+    it('should contain one published inport', () => {
+      chai.expect(Object.keys(g.inports).length).to.equal(1);
+    });
+    it('should contain one published outport', () => {
+      chai.expect(Object.keys(g.outports).length).to.equal(1);
+    });
+    it('should keep the output export metadata intact', () => {
       const exp = g.outports.outPut;
       chai.expect(exp.metadata.x).to.equal(500);
-      return chai.expect(exp.metadata.y).to.equal(505);
+      chai.expect(exp.metadata.y).to.equal(505);
     });
     it('should contain two groups', () => chai.expect(g.groups.length).to.equal(2));
-    it('should allow modifying group metadata', function(done) {
+    it('should allow modifying group metadata', (done) => {
       const group = g.groups[0];
-      g.once('changeGroup', function(grp) {
+      g.once('changeGroup', (grp) => {
         chai.expect(grp).to.equal(group);
         chai.expect(grp.metadata.label).to.equal('Main');
         chai.expect(grp.metadata.foo).to.equal('Bar');
-        chai.expect(g.groups[1].metadata).to.be.empty;
-        return done();
+        chai.expect(g.groups[1].metadata).to.eql({});
+        done();
       });
-      return g.setGroupMetadata('first',
-        {foo: 'Bar'});
+      g.setGroupMetadata('first',
+        { foo: 'Bar' });
     });
-    it('should allow renaming groups', function(done) {
+    it('should allow renaming groups', (done) => {
       const group = g.groups[0];
-      g.once('renameGroup', function(oldName, newName) {
+      g.once('renameGroup', (oldName, newName) => {
         chai.expect(oldName).to.equal('first');
         chai.expect(newName).to.equal('renamed');
         chai.expect(group.name).to.equal(newName);
-        return done();
+        done();
       });
-      return g.renameGroup('first', 'renamed');
+      g.renameGroup('first', 'renamed');
     });
-    describe('renaming a node', function() {
-      it('should emit an event', function(done) {
-        g.once('renameNode', function(oldId, newId) {
+    describe('renaming a node', () => {
+      it('should emit an event', (done) => {
+        g.once('renameNode', (oldId, newId) => {
           chai.expect(oldId).to.equal('Foo');
           chai.expect(newId).to.equal('Baz');
-          return done();
+          done();
         });
-        return g.renameNode('Foo', 'Baz');
+        g.renameNode('Foo', 'Baz');
       });
       it('should be available with the new name', () => chai.expect(g.getNode('Baz')).to.be.an('object'));
       it('shouldn\'t be available with the old name', () => chai.expect(g.getNode('Foo')).to.be.null);
-      it('should have the edge still going from it', function() {
+      it('should have the edge still going from it', () => {
         let connection = null;
-        for (let edge of Array.from(g.edges)) {
+        g.edges.forEach((edge) => {
           if (edge.from.node === 'Baz') { connection = edge; }
-        }
-        return chai.expect(connection).to.be.an('object');
+        });
+        chai.expect(connection).to.be.an('object');
       });
       it('should still be exported', () => chai.expect(g.inports.inPut.process).to.equal('Baz'));
-      it('should still be grouped', function() {
+      it('should still be grouped', () => {
         let groups = 0;
-        for (let group of Array.from(g.groups)) {
-          if (group.nodes.indexOf('Baz') !== -1) { groups++; }
-        }
-        return chai.expect(groups).to.equal(1);
+        g.groups.forEach((group) => {
+          if (group.nodes.indexOf('Baz') !== -1) { groups += 1; }
+        });
+        chai.expect(groups).to.equal(1);
       });
-      it('shouldn\'t be have edges with the old name', function() {
+      it('shouldn\'t be have edges with the old name', () => {
         let connection = null;
-        for (let edge of Array.from(g.edges)) {
+        g.edges.forEach((edge) => {
           if (edge.from.node === 'Foo') { connection = edge; }
           if (edge.to.node === 'Foo') { connection = edge; }
-        }
-        return chai.expect(connection).to.be.a('null');
+        });
+        chai.expect(connection).to.be.a('null');
       });
-      it('should have the IIP still going to it', function() {
+      it('should have the IIP still going to it', () => {
         let iip = null;
-        for (let edge of Array.from(g.initializers)) {
+        g.initializers.forEach((edge) => {
           if (edge.to.node === 'Baz') { iip = edge; }
-        }
-        return chai.expect(iip).to.be.an('object');
+        });
+        chai.expect(iip).to.be.an('object');
       });
-      it('shouldn\'t have IIPs going to the old name', function() {
+      it('shouldn\'t have IIPs going to the old name', () => {
         let iip = null;
-        for (let edge of Array.from(g.initializers)) {
+        g.initializers.forEach((edge) => {
           if (edge.to.node === 'Foo') { iip = edge; }
-        }
-        return chai.expect(iip).to.be.a('null');
+        });
+        chai.expect(iip).to.be.a('null');
       });
-      return it('shouldn\'t be grouped with the old name', function() {
+      it('shouldn\'t be grouped with the old name', () => {
         let groups = 0;
-        for (let group of Array.from(g.groups)) {
-          if (group.nodes.indexOf('Foo') !== -1) { groups++; }
-        }
-        return chai.expect(groups).to.equal(0);
+        g.groups.forEach((group) => {
+          if (group.nodes.indexOf('Foo') !== -1) { groups += 1; }
+        });
+        chai.expect(groups).to.equal(0);
       });
     });
-    describe('renaming an inport', () => it('should emit an event', function(done) {
-      g.once('renameInport', function(oldName, newName) {
-        chai.expect(oldName).to.equal('inPut');
-        chai.expect(newName).to.equal('opt');
-        chai.expect(g.inports.inPut).to.be.an('undefined');
-        chai.expect(g.inports.opt).to.be.an('object');
-        chai.expect(g.inports.opt.process).to.equal('Baz');
-        chai.expect(g.inports.opt.port).to.equal('inPut');
-        return done();
-      });
-      return g.renameInport('inPut', 'opt');
-    }));
-    describe('renaming an outport', () => it('should emit an event', function(done) {
-      g.once('renameOutport', function(oldName, newName) {
-        chai.expect(oldName).to.equal('outPut');
-        chai.expect(newName).to.equal('foo');
-        chai.expect(g.outports.outPut).to.be.an('undefined');
-        chai.expect(g.outports.foo).to.be.an('object');
-        chai.expect(g.outports.foo.process).to.equal('Bar');
-        chai.expect(g.outports.foo.port).to.equal('outPut');
-        return done();
-      });
-      return g.renameOutport('outPut', 'foo');
-    }));
-    return describe('removing a node', function() {
-      it('should emit an event', function(done) {
-        g.once('removeNode', function(node) {
-          chai.expect(node.id).to.equal('Baz');
-          return done();
+    describe('renaming an inport', () => {
+      it('should emit an event', (done) => {
+        g.once('renameInport', (oldName, newName) => {
+          chai.expect(oldName).to.equal('inPut');
+          chai.expect(newName).to.equal('opt');
+          chai.expect(g.inports.inPut).to.be.an('undefined');
+          chai.expect(g.inports.opt).to.be.an('object');
+          chai.expect(g.inports.opt.process).to.equal('Baz');
+          chai.expect(g.inports.opt.port).to.equal('inPut');
+          done();
         });
-        return g.removeNode('Baz');
+        g.renameInport('inPut', 'opt');
       });
-      it('shouldn\'t have edges left behind', function() {
+    });
+    describe('renaming an outport', () => {
+      it('should emit an event', (done) => {
+        g.once('renameOutport', (oldName, newName) => {
+          chai.expect(oldName).to.equal('outPut');
+          chai.expect(newName).to.equal('foo');
+          chai.expect(g.outports.outPut).to.be.an('undefined');
+          chai.expect(g.outports.foo).to.be.an('object');
+          chai.expect(g.outports.foo.process).to.equal('Bar');
+          chai.expect(g.outports.foo.port).to.equal('outPut');
+          done();
+        });
+        g.renameOutport('outPut', 'foo');
+      });
+    });
+    describe('removing a node', () => {
+      it('should emit an event', (done) => {
+        g.once('removeNode', (node) => {
+          chai.expect(node.id).to.equal('Baz');
+          done();
+        });
+        g.removeNode('Baz');
+      });
+      it('shouldn\'t have edges left behind', () => {
         let connections = 0;
-        for (let edge of Array.from(g.edges)) {
-          if (edge.from.node === 'Baz') { connections++; }
-          if (edge.to.node === 'Baz') { connections++; }
-        }
-        return chai.expect(connections).to.equal(0);
+        g.edges.forEach((edge) => {
+          if (edge.from.node === 'Baz') { connections += 1; }
+          if (edge.to.node === 'Baz') { connections += 1; }
+        });
+        chai.expect(connections).to.equal(0);
       });
-      it('shouldn\'t have IIPs left behind', function() {
+      it('shouldn\'t have IIPs left behind', () => {
         let connections = 0;
-        for (let edge of Array.from(g.initializers)) {
-          if (edge.to.node === 'Baz') { connections++; }
-        }
-        return chai.expect(connections).to.equal(0);
+        g.initializers.forEach((edge) => {
+          if (edge.to.node === 'Baz') { connections += 1; }
+        });
+        chai.expect(connections).to.equal(0);
       });
-      it('shouldn\'t be grouped', function() {
+      it('shouldn\'t be grouped', () => {
         let groups = 0;
-        for (let group of Array.from(g.groups)) {
-          if (group.nodes.indexOf('Baz') !== -1) { groups++; }
-        }
-        return chai.expect(groups).to.equal(0);
+        g.groups.forEach((group) => {
+          if (group.nodes.indexOf('Baz') !== -1) { groups += 1; }
+        });
+        chai.expect(groups).to.equal(0);
       });
-      return it('shouldn\'t affect other groups', function() {
+      it('shouldn\'t affect other groups', () => {
         const otherGroup = g.groups[1];
-        return chai.expect(otherGroup.nodes.length).to.equal(2);
+        chai.expect(otherGroup.nodes.length).to.equal(2);
       });
     });
   });
 
-  describe('with multiple connected ArrayPorts', function() {
-    const g = new lib.graph.Graph;
+  describe('with multiple connected ArrayPorts', () => {
+    const g = new lib.graph.Graph();
     g.addNode('Split1', 'Split');
     g.addNode('Split2', 'Split');
     g.addNode('Merge1', 'Merge');
@@ -518,204 +541,234 @@ describe('FBP Graph', function() {
     g.addEdge('Split2', 'out', 'Merge2', 'in');
     it('should contain four nodes', () => chai.expect(g.nodes.length).to.equal(4));
     it('should contain four edges', () => chai.expect(g.edges.length).to.equal(4));
-    it('should allow a specific edge to be removed', function() {
+    it('should allow a specific edge to be removed', () => {
       g.removeEdge('Split1', 'out', 'Merge2', 'in');
-      return chai.expect(g.edges.length).to.equal(3);
+      chai.expect(g.edges.length).to.equal(3);
     });
-    it('shouldn\'t contain the removed connection from Split1', function() {
+    it('shouldn\'t contain the removed connection from Split1', () => {
       let connection = null;
-      for (let edge of Array.from(g.edges)) {
+      g.edges.forEach((edge) => {
         if ((edge.from.node === 'Split1') && (edge.to.node === 'Merge2')) {
           connection = edge;
         }
-      }
-      return chai.expect(connection).to.be.null;
+      });
+      chai.expect(connection).to.equal(null);
     });
-    return it('should still contain the other connection from Split1', function() {
+    it('should still contain the other connection from Split1', () => {
       let connection = null;
-      for (let edge of Array.from(g.edges)) {
+      g.edges.forEach((edge) => {
         if ((edge.from.node === 'Split1') && (edge.to.node === 'Merge1')) {
           connection = edge;
         }
-      }
-      return chai.expect(connection).to.be.an('object');
+      });
+      chai.expect(connection).to.be.an('object');
     });
   });
 
-  describe('with an Initial Information Packet', function() {
-    const g = new lib.graph.Graph;
+  describe('with an Initial Information Packet', () => {
+    const g = new lib.graph.Graph();
     g.addNode('Split', 'Split');
     g.addInitial('Foo', 'Split', 'in');
     it('should contain one node', () => chai.expect(g.nodes.length).to.equal(1));
     it('should contain no edges', () => chai.expect(g.edges.length).to.equal(0));
     it('should contain one IIP', () => chai.expect(g.initializers.length).to.equal(1));
-    return describe('on removing that IIP', function() {
-      it('should emit a removeInitial event', function(done) {
-        g.once('removeInitial', function(iip) {
+    describe('on removing that IIP', () => {
+      it('should emit a removeInitial event', (done) => {
+        g.once('removeInitial', (iip) => {
           chai.expect(iip.from.data).to.equal('Foo');
           chai.expect(iip.to.node).to.equal('Split');
           chai.expect(iip.to.port).to.equal('in');
-          return done();
+          done();
         });
-        return g.removeInitial('Split', 'in');
+        g.removeInitial('Split', 'in');
       });
-      return it('should contain no IIPs', () => chai.expect(g.initializers.length).to.equal(0));
+      it('should contain no IIPs', () => chai.expect(g.initializers.length).to.equal(0));
     });
   });
 
-  describe('with an Inport Initial Information Packet', function() {
-    const g = new lib.graph.Graph;
+  describe('with an Inport Initial Information Packet', () => {
+    const g = new lib.graph.Graph();
     g.addNode('Split', 'Split');
     g.addInport('testinport', 'Split', 'in');
     g.addGraphInitial('Foo', 'testinport');
     it('should contain one node', () => chai.expect(g.nodes.length).to.equal(1));
     it('should contain no edges', () => chai.expect(g.edges.length).to.equal(0));
-    it('should contain one IIP for the correct node', function() {
+    it('should contain one IIP for the correct node', () => {
       chai.expect(g.initializers.length).to.equal(1);
       chai.expect(g.initializers[0].from.data).to.equal('Foo');
       chai.expect(g.initializers[0].to.node).to.equal('Split');
-      return chai.expect(g.initializers[0].to.port).to.equal('in');
+      chai.expect(g.initializers[0].to.port).to.equal('in');
     });
-    describe('on removing that IIP', function() {
-      it('should emit a removeInitial event', function(done) {
-        g.once('removeInitial', function(iip) {
+    describe('on removing that IIP', () => {
+      it('should emit a removeInitial event', (done) => {
+        g.once('removeInitial', (iip) => {
           chai.expect(iip.from.data).to.equal('Foo');
           chai.expect(iip.to.node).to.equal('Split');
           chai.expect(iip.to.port).to.equal('in');
-          return done();
+          done();
         });
-        return g.removeGraphInitial('testinport');
+        g.removeGraphInitial('testinport');
       });
-      return it('should contain no IIPs', () => chai.expect(g.initializers.length).to.equal(0));
+      it('should contain no IIPs', () => chai.expect(g.initializers.length).to.equal(0));
     });
-    return describe('on adding IIP for a non-existent inport', function() {
+    describe('on adding IIP for a non-existent inport', () => {
       g.addGraphInitial('Bar', 'nonexistent');
-      return it('should not add any IIP', () => chai.expect(g.initializers.length).to.equal(0));
+      it('should not add any IIP', () => chai.expect(g.initializers.length).to.equal(0));
     });
   });
 
-  describe('with an indexed Inport Initial Information Packet', function() {
-    const g = new lib.graph.Graph;
+  describe('with an indexed Inport Initial Information Packet', () => {
+    const g = new lib.graph.Graph();
     g.addNode('Split', 'Split');
     g.addInport('testinport', 'Split', 'in');
     g.addGraphInitialIndex('Foo', 'testinport', 1);
     it('should contain one node', () => chai.expect(g.nodes.length).to.equal(1));
     it('should contain no edges', () => chai.expect(g.edges.length).to.equal(0));
-    it('should contain one IIP for the correct node', function() {
+    it('should contain one IIP for the correct node', () => {
       chai.expect(g.initializers.length).to.equal(1);
       chai.expect(g.initializers[0].from.data).to.equal('Foo');
       chai.expect(g.initializers[0].to.node).to.equal('Split');
       chai.expect(g.initializers[0].to.port).to.equal('in');
-      return chai.expect(g.initializers[0].to.index).to.equal(1);
+      chai.expect(g.initializers[0].to.index).to.equal(1);
     });
-    describe('on removing that IIP', function() {
-      it('should emit a removeInitial event', function(done) {
-        g.once('removeInitial', function(iip) {
+    describe('on removing that IIP', () => {
+      it('should emit a removeInitial event', (done) => {
+        g.once('removeInitial', (iip) => {
           chai.expect(iip.from.data).to.equal('Foo');
           chai.expect(iip.to.node).to.equal('Split');
           chai.expect(iip.to.port).to.equal('in');
-          return done();
+          done();
         });
-        return g.removeGraphInitial('testinport');
+        g.removeGraphInitial('testinport');
       });
-      return it('should contain no IIPs', () => chai.expect(g.initializers.length).to.equal(0));
+      it('should contain no IIPs', () => chai.expect(g.initializers.length).to.equal(0));
     });
-    return describe('on adding IIP for a non-existent inport', function() {
+    describe('on adding IIP for a non-existent inport', () => {
       g.addGraphInitialIndex('Bar', 'nonexistent', 1);
-      return it('should not add any IIP', () => chai.expect(g.initializers.length).to.equal(0));
+      it('should not add any IIP', () => chai.expect(g.initializers.length).to.equal(0));
     });
   });
 
-  describe('with no nodes', function() {
-    const g = new lib.graph.Graph;
-    it('should not allow adding edges', function() {
+  describe('with no nodes', () => {
+    const g = new lib.graph.Graph();
+    it('should not allow adding edges', () => {
       g.addEdge('Foo', 'out', 'Bar', 'in');
-      return chai.expect(g.edges).to.be.empty;
+      chai.expect(g.edges).to.eql([]);
     });
-    return it('should not allow adding IIPs', function() {
+    it('should not allow adding IIPs', () => {
       g.addInitial('Hello', 'Bar', 'in');
-      return chai.expect(g.initializers).to.be.empty;
+      chai.expect(g.initializers).to.eql([]);
     });
   });
 
-  return describe('saving and loading files', function() {
-    describe('with .json suffix', function() {
+  describe('saving and loading files', () => {
+    describe('with .json suffix', () => {
       let originalGraph = null;
       let graphPath = null;
-      before(function() {
-        if (browser) { return this.skip(); }
+      before(function () {
+        if (browser) {
+          this.skip();
+          return;
+        }
+        // eslint-disable-next-line global-require
         const path = require('path');
-        return graphPath = path.resolve(__dirname, 'foo.json');
+        graphPath = path.resolve(__dirname, 'foo.json');
       });
-      after(function(done) {
-        if (browser) { return done(); }
+      after((done) => {
+        if (browser) {
+          done();
+          return;
+        }
+        // eslint-disable-next-line global-require
         const fs = require('fs');
-        return fs.unlink(graphPath, done);
+        fs.unlink(graphPath, done);
       });
-      it('should be possible to save a graph to a file', function(done) {
-        const g = new lib.graph.Graph;
+      it('should be possible to save a graph to a file', (done) => {
+        const g = new lib.graph.Graph();
         g.addNode('Foo', 'Bar');
         originalGraph = g.toJSON();
-        return g.save(graphPath, done);
+        g.save(graphPath, done);
       });
-      return it('should be possible to load a graph from a file', done => lib.graph.loadFile(graphPath, function(err, g) {
-        if (err) { return done(err); }
+      it('should be possible to load a graph from a file', (done) => lib.graph.loadFile(graphPath, (err, g) => {
+        if (err) {
+          done(err);
+          return;
+        }
         chai.expect(g.toJSON()).to.eql(originalGraph);
-        return done();
+        done();
       }));
     });
-    return describe('without .json suffix', function() {
+    describe('without .json suffix', () => {
       let graphPathLegacy = null;
       let graphPathLegacySuffix = null;
       let originalGraph = null;
-      before(function() {
-        if (browser) { return this.skip(); }
+      before(function () {
+        if (browser) {
+          this.skip();
+          return;
+        }
+        // eslint-disable-next-line global-require
         const path = require('path');
         graphPathLegacy = path.resolve(__dirname, 'bar');
-        return graphPathLegacySuffix = path.resolve(__dirname, 'bar.json');
+        graphPathLegacySuffix = path.resolve(__dirname, 'bar.json');
       });
-      after(function(done) {
-        if (browser) { return done(); }
+      after((done) => {
+        if (browser) {
+          done();
+          return;
+        }
+        // eslint-disable-next-line global-require
         const fs = require('fs');
-        return fs.unlink(graphPathLegacySuffix, done);
+        fs.unlink(graphPathLegacySuffix, done);
       });
-      it('should be possible to save a graph to a file', function(done) {
-        const g = new lib.graph.Graph;
+      it('should be possible to save a graph to a file', (done) => {
+        const g = new lib.graph.Graph();
         g.addNode('Foo', 'Bar');
         originalGraph = g.toJSON();
-        return g.save(graphPathLegacy, done);
+        g.save(graphPathLegacy, done);
       });
-      return it('should be possible to load a graph from a file', done => lib.graph.loadFile(graphPathLegacySuffix, function(err, g) {
-        if (err) { return done(err); }
-        chai.expect(g.toJSON()).to.eql(originalGraph);
-        return done();
-      }));
+      it('should be possible to load a graph from a file', (done) => {
+        lib.graph.loadFile(graphPathLegacySuffix, (err, g) => {
+          if (err) {
+            done(err);
+            return;
+          }
+          chai.expect(g.toJSON()).to.eql(originalGraph);
+          done();
+        });
+      });
     });
   });
 });
 
-describe('Case Insensitive Graph', () => describe('Graph operations should convert port names to lowercase', function() {
-  let g = null;
-  beforeEach(() => g = new lib.graph.Graph('Hola'));
-
-  it('should have case sensitive property set to false', () => chai.expect(g.caseSensitive).to.equal(false));
-
-  return it('should have case insensitive ports on edges', function(done) {
-    g.addNode('Foo', 'foo');
-    g.addNode('Bar', 'bar');
-    g.once('addEdge', function(edge) {
-      chai.expect(edge.from.node).to.equal('Foo');
-      chai.expect(edge.to.port).to.equal('input');
-      chai.expect(edge.from.port).to.equal('output');
-
-      g.once('removeEdge', function(edge) {
-        chai.expect(g.edges.length).to.equal(0);
-        return done();
-      });
-
-      return g.removeEdge('Foo', 'outPut', 'Bar', 'inPut');
+describe('Case Insensitive Graph', () => {
+  describe('Graph operations should convert port names to lowercase', () => {
+    let g = null;
+    beforeEach(() => {
+      g = new lib.graph.Graph('Hola');
     });
 
-    return g.addEdge('Foo', 'outPut', 'Bar', 'inPut');
+    it('should have case sensitive property set to false', () => {
+      chai.expect(g.caseSensitive).to.equal(false);
+    });
+
+    it('should have case insensitive ports on edges', (done) => {
+      g.addNode('Foo', 'foo');
+      g.addNode('Bar', 'bar');
+      g.once('addEdge', (edge) => {
+        chai.expect(edge.from.node).to.equal('Foo');
+        chai.expect(edge.to.port).to.equal('input');
+        chai.expect(edge.from.port).to.equal('output');
+
+        g.once('removeEdge', () => {
+          chai.expect(g.edges).to.eql([]);
+          done();
+        });
+
+        g.removeEdge('Foo', 'outPut', 'Bar', 'inPut');
+      });
+
+      g.addEdge('Foo', 'outPut', 'Bar', 'inPut');
+    });
   });
-}));
+});

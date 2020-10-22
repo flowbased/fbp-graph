@@ -1,41 +1,41 @@
-/*
- * decaffeinate suggestions:
- * DS102: Remove unnecessary code created because of implicit returns
- * Full docs: https://github.com/decaffeinate/decaffeinate/blob/master/docs/suggestions.md
- */
-let chai, lib;
+let chai; let lib;
 if ((typeof process !== 'undefined') && process.execPath && process.execPath.match(/node|iojs/)) {
+  // eslint-disable-next-line global-require
   if (!chai) { chai = require('chai'); }
+  // eslint-disable-next-line global-require
   lib = require('../index');
 } else {
+  // eslint-disable-next-line global-require,import/no-unresolved
   lib = require('fbp-graph');
 }
 
-describe('FBP Graph Journal', function() {
-  describe('connected to initialized graph', function() {
-    const g = new lib.graph.Graph;
+describe('FBP Graph Journal', () => {
+  describe('connected to initialized graph', () => {
+    const g = new lib.graph.Graph();
     g.addNode('Foo', 'Bar');
     g.addNode('Baz', 'Foo');
     g.addEdge('Foo', 'out', 'Baz', 'in');
     const j = new lib.journal.Journal(g);
-    return it('should have just the initial transaction', () => chai.expect(j.store.lastRevision).to.equal(0));
+    it('should have just the initial transaction', () => {
+      chai.expect(j.store.lastRevision).to.equal(0);
+    });
   });
 
-  describe('following basic graph changes', function() {
-    const g = new lib.graph.Graph;
+  describe('following basic graph changes', () => {
+    const g = new lib.graph.Graph();
     const j = new lib.journal.Journal(g);
-    return it('should create one transaction per change', function() {
+    it('should create one transaction per change', () => {
       g.addNode('Foo', 'Bar');
       g.addNode('Baz', 'Foo');
       g.addEdge('Foo', 'out', 'Baz', 'in');
       chai.expect(j.store.lastRevision).to.equal(3);
       g.removeNode('Baz');
-      return chai.expect(j.store.lastRevision).to.equal(4);
+      chai.expect(j.store.lastRevision).to.equal(4);
     });
   });
 
-  describe('pretty printing', function() {
-    const g = new lib.graph.Graph;
+  describe('pretty printing', () => {
+    const g = new lib.graph.Graph();
     const j = new lib.journal.Journal(g);
 
     g.startTransaction('test1');
@@ -50,7 +50,7 @@ describe('FBP Graph Journal', function() {
     g.removeNode('Baz');
     g.endTransaction('test2');
 
-    return it('should be human readable', function() {
+    it('should be human readable', () => {
       const ref = `>>> 0: initial
 <<< 0: initial
 >>> 1: test1
@@ -64,30 +64,30 @@ Foo out -X> in Baz
 META Foo
 DEL Foo(Bar)
 <<< 1: test1`;
-      return chai.expect(j.toPrettyString(0,2)).to.equal(ref);
+      chai.expect(j.toPrettyString(0, 2)).to.equal(ref);
     });
   });
 
-  describe('jumping to revision', function() {
-    const g = new lib.graph.Graph;
+  describe('jumping to revision', () => {
+    const g = new lib.graph.Graph();
     const j = new lib.journal.Journal(g);
     g.addNode('Foo', 'Bar');
     g.addNode('Baz', 'Foo');
     g.addEdge('Foo', 'out', 'Baz', 'in');
     g.addInitial(42, 'Foo', 'in');
     g.removeNode('Foo');
-    return it('should change the graph', function() {
+    it('should change the graph', () => {
       j.moveToRevision(0);
       chai.expect(g.nodes.length).to.equal(0);
       j.moveToRevision(2);
       chai.expect(g.nodes.length).to.equal(2);
       j.moveToRevision(5);
-      return chai.expect(g.nodes.length).to.equal(1);
+      chai.expect(g.nodes.length).to.equal(1);
     });
   });
 
-  describe('linear undo/redo', function() {
-    const g = new lib.graph.Graph;
+  describe('linear undo/redo', () => {
+    const g = new lib.graph.Graph();
     const j = new lib.journal.Journal(g);
     g.addNode('Foo', 'Bar');
     g.addNode('Baz', 'Foo');
@@ -95,78 +95,77 @@ DEL Foo(Bar)
     g.addInitial(42, 'Foo', 'in');
     const graphBeforeError = g.toJSON();
     chai.expect(g.nodes.length).to.equal(2);
-    it('undo should restore previous revision', function() {
+    it('undo should restore previous revision', () => {
       g.removeNode('Foo');
       chai.expect(g.nodes.length).to.equal(1);
       j.undo();
       chai.expect(g.nodes.length).to.equal(2);
-      return chai.expect(g.toJSON()).to.deep.equal(graphBeforeError);
+      chai.expect(g.toJSON()).to.deep.equal(graphBeforeError);
     });
-    it('redo should apply the same change again', function() {
+    it('redo should apply the same change again', () => {
       j.redo();
-      return chai.expect(g.nodes.length).to.equal(1);
+      chai.expect(g.nodes.length).to.equal(1);
     });
-    return it('undo should also work multiple revisions back', function() {
+    it('undo should also work multiple revisions back', () => {
       g.removeNode('Baz');
       j.undo();
       j.undo();
       chai.expect(g.nodes.length).to.equal(2);
-      return chai.expect(g.toJSON()).to.deep.equal(graphBeforeError);
+      chai.expect(g.toJSON()).to.deep.equal(graphBeforeError);
     });
   });
 
-  return describe('undo/redo of metadata changes', function() {
-    const g = new lib.graph.Graph;
+  describe('undo/redo of metadata changes', () => {
+    const g = new lib.graph.Graph();
     const j = new lib.journal.Journal(g);
     g.addNode('Foo', 'Bar');
     g.addNode('Baz', 'Foo');
     g.addEdge('Foo', 'out', 'Baz', 'in');
 
-    it('adding group', function() {
-      g.addGroup('all', ['Foo', 'Bax'], {'label': 'all nodes'});
+    it('adding group', () => {
+      g.addGroup('all', ['Foo', 'Bax'], { label: 'all nodes' });
       chai.expect(g.groups.length).to.equal(1);
-      return chai.expect(g.groups[0].name).to.equal('all');
+      chai.expect(g.groups[0].name).to.equal('all');
     });
-    it('undoing group add', function() {
+    it('undoing group add', () => {
       j.undo();
-      return chai.expect(g.groups.length).to.equal(0);
+      chai.expect(g.groups.length).to.equal(0);
     });
-    it('redoing group add', function() {
+    it('redoing group add', () => {
       j.redo();
-      return chai.expect(g.groups[0].metadata['label']).to.equal('all nodes');
+      chai.expect(g.groups[0].metadata.label).to.equal('all nodes');
     });
 
-    it('changing group metadata adds revision', function() {
+    it('changing group metadata adds revision', () => {
       const r = j.store.lastRevision;
-      g.setGroupMetadata('all', {'label': 'ALL NODES!'});
-      return chai.expect(j.store.lastRevision).to.equal(r+1);
+      g.setGroupMetadata('all', { label: 'ALL NODES!' });
+      chai.expect(j.store.lastRevision).to.equal(r + 1);
     });
-    it('undoing group metadata change', function() {
+    it('undoing group metadata change', () => {
       j.undo();
-      return chai.expect(g.groups[0].metadata['label']).to.equal("all nodes");
+      chai.expect(g.groups[0].metadata.label).to.equal('all nodes');
     });
-    it('redoing group metadata change', function() {
+    it('redoing group metadata change', () => {
       j.redo();
-      return chai.expect(g.groups[0].metadata['label']).to.equal("ALL NODES!");
+      chai.expect(g.groups[0].metadata.label).to.equal('ALL NODES!');
     });
 
-    it('setting node metadata', function() {
-      g.setNodeMetadata('Foo', {"oneone": 11, 2: "two"});
-      return chai.expect(Object.keys(g.getNode('Foo').metadata).length).to.equal(2);
+    it('setting node metadata', () => {
+      g.setNodeMetadata('Foo', { oneone: 11, 2: 'two' });
+      chai.expect(Object.keys(g.getNode('Foo').metadata).length).to.equal(2);
     });
-    it('undoing set node metadata', function() {
+    it('undoing set node metadata', () => {
       j.undo();
-      return chai.expect(Object.keys(g.getNode('Foo').metadata).length).to.equal(0);
+      chai.expect(Object.keys(g.getNode('Foo').metadata).length).to.equal(0);
     });
-    return it('redoing set node metadata', function() {
+    it('redoing set node metadata', () => {
       j.redo();
-      return chai.expect(g.getNode('Foo').metadata["oneone"]).to.equal(11);
+      chai.expect(g.getNode('Foo').metadata.oneone).to.equal(11);
     });
   });
 });
 
-
-describe('Journalling of graph merges', function() {
+describe('Journalling of graph merges', () => {
   const A = `\
 {
 "properties": { "name": "Example", "foo": "Baz", "bar": "Foo" },
@@ -225,39 +224,51 @@ describe('Journalling of graph merges', function() {
   let b = null;
   let g = null; // one we modify
   let j = null;
-  return describe('G -> B', function() {
-    it('G starts out as A', done => lib.graph.loadJSON(JSON.parse(A), function(err, instance) {
-      if (err) { return done(err); }
-      a = instance;
-      return lib.graph.loadJSON(JSON.parse(A), function(err, instance) {
-        if (err) { return done(err); }
-        g = instance;
-        chai.expect(lib.graph.equivalent(a, g)).to.equal(true);
-        return done();
+  describe('G -> B', () => {
+    it('G starts out as A', (done) => {
+      lib.graph.loadJSON(JSON.parse(A), (err, instance) => {
+        if (err) {
+          done(err);
+          return;
+        }
+        a = instance;
+        lib.graph.loadJSON(JSON.parse(A), (loadErr, instance2) => {
+          if (loadErr) {
+            done(loadErr);
+            return;
+          }
+          g = instance2;
+          chai.expect(lib.graph.equivalent(a, g)).to.equal(true);
+          done();
+        });
       });
-    }));
-    it('G and B starts out different', done => lib.graph.loadJSON(JSON.parse(B), function(err, instance) {
-      if (err) { return done(err); }
-      b = instance;
-      chai.expect(lib.graph.equivalent(g, b)).to.equal(false);
-      return done();
-    }));
-    it('merge should make G equivalent to B', function(done) {
+    });
+    it('G and B starts out different', (done) => {
+      lib.graph.loadJSON(JSON.parse(B), (err, instance) => {
+        if (err) {
+          done(err);
+          return;
+        }
+        b = instance;
+        chai.expect(lib.graph.equivalent(g, b)).to.equal(false);
+        done();
+      });
+    });
+    it('merge should make G equivalent to B', (done) => {
       j = new lib.journal.Journal(g);
       g.startTransaction('merge');
       lib.graph.mergeResolveTheirs(g, b);
       g.endTransaction('merge');
       chai.expect(lib.graph.equivalent(g, b)).to.equal(true);
-      return done();
+      done();
     });
-    return it('undoing merge should make G equivalent to A again', function(done) {
+    it('undoing merge should make G equivalent to A again', (done) => {
       j.undo();
       const res = lib.graph.equivalent(g, a);
       chai.expect(res).to.equal(true);
-      return done();
+      done();
     });
   });
 });
 
 // FIXME: add tests for lib.graph.loadJSON/loadFile, and journal metadata
-
