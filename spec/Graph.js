@@ -68,7 +68,7 @@ describe('FBP Graph', () => {
         const json = g.toJSON();
         chai.expect(typeof json.processes.Foo).to.equal('object');
         chai.expect(json.processes.Foo.component).to.equal('Bar');
-        chai.expect(json.processes.Foo.display).to.be('undefined');
+        chai.expect(json.processes.Foo.display).to.be.a('undefined');
       });
       it('removing should emit an event', (done) => {
         g.once('removeNode', (node) => {
@@ -80,7 +80,7 @@ describe('FBP Graph', () => {
       });
       it('should not be available after removal', () => {
         const node = g.getNode('Foo');
-        chai.expect(node).to.be.a('null');
+        chai.expect(node).to.be.a('undefined');
         chai.expect(g.nodes.length).to.equal(0);
         chai.expect(g.nodes.indexOf(n)).to.equal(-1);
       });
@@ -417,8 +417,12 @@ describe('FBP Graph', () => {
         });
         g.renameNode('Foo', 'Baz');
       });
-      it('should be available with the new name', () => chai.expect(g.getNode('Baz')).to.be.an('object'));
-      it('shouldn\'t be available with the old name', () => chai.expect(g.getNode('Foo')).to.be.null);
+      it('should be available with the new name', () => {
+        chai.expect(g.getNode('Baz')).to.be.an('object');
+      });
+      it('shouldn\'t be available with the old name', () => {
+        chai.expect(g.getNode('Foo')).to.be.a('undefined');
+      });
       it('should have the edge still going from it', () => {
         let connection = null;
         g.edges.forEach((edge) => {
@@ -523,7 +527,7 @@ describe('FBP Graph', () => {
         chai.expect(groups).to.equal(0);
       });
       it('shouldn\'t affect other groups', () => {
-        const otherGroup = g.groups[1];
+        const otherGroup = g.groups[0];
         chai.expect(otherGroup.nodes.length).to.equal(2);
       });
     });
@@ -622,8 +626,12 @@ describe('FBP Graph', () => {
     g.addNode('Split', 'Split');
     g.addInport('testinport', 'Split', 'in');
     g.addGraphInitialIndex('Foo', 'testinport', 1);
-    it('should contain one node', () => chai.expect(g.nodes.length).to.equal(1));
-    it('should contain no edges', () => chai.expect(g.edges.length).to.equal(0));
+    it('should contain one node', () => {
+      chai.expect(g.nodes.length).to.equal(1);
+    });
+    it('should contain no edges', () => {
+      chai.expect(g.edges).to.eql([]);
+    });
     it('should contain one IIP for the correct node', () => {
       chai.expect(g.initializers.length).to.equal(1);
       chai.expect(g.initializers[0].from.data).to.equal('Foo');
@@ -761,8 +769,10 @@ describe('Case Insensitive Graph', () => {
         chai.expect(edge.from.port).to.equal('output');
 
         g.once('removeEdge', () => {
-          chai.expect(g.edges).to.eql([]);
-          done();
+          setTimeout(() => {
+            chai.expect(g.edges).to.eql([]);
+            done();
+          }, 0);
         });
 
         g.removeEdge('Foo', 'outPut', 'Bar', 'inPut');
