@@ -1,14 +1,12 @@
-const journal = require('./Journal');
-const graph = require('./Graph');
+import * as journal from './Journal';
+import * as graph from './Graph';
+
 const { Journal } = journal;
 const { Graph } = graph;
 
-exports.journal = {
-  ...journal,
+export {
+  journal,
+  graph,
+  Journal,
+  Graph,
 };
-exports.graph = {
-  ...graph,
-};
-
-exports.Graph = Graph;
-exports.Journal = Journal;

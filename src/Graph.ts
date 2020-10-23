@@ -978,9 +978,9 @@ export default class Graph extends EventEmitter {
   }
 }
 
-exports.Graph = Graph;
-
-exports.createGraph = (name: string, options: GraphOptions): Graph => new Graph(name, options);
+function createGraph(name: string, options: GraphOptions): Graph {
+  return new Graph(name, options);
+};
 
 interface GraphLoadingCallback {
   (err: Error): void;
@@ -991,7 +991,7 @@ interface StringLoadingCallback {
   (err: null, result: string): void;
 }
 
-exports.loadJSON = function loadJson(passedDefinition: string | GraphJson, callback: GraphLoadingCallback, metadata: JournalMetadata = {}) {
+function loadJSON(passedDefinition: string | GraphJson, callback: GraphLoadingCallback, metadata: JournalMetadata = {}) {
   let definition: GraphJson;
   if (typeof passedDefinition === 'string') {
     definition = JSON.parse(passedDefinition);
@@ -1103,9 +1103,9 @@ exports.loadJSON = function loadJson(passedDefinition: string | GraphJson, callb
   graph.endTransaction('loadJSON');
 
   return callback(null, graph);
-};
+}
 
-exports.loadFBP = function loadFBP(fbpData: string, callback: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
+function loadFBP(fbpData: string, callback: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
   let definition;
   try {
     // eslint-disable-next-line global-require
@@ -1113,8 +1113,8 @@ exports.loadFBP = function loadFBP(fbpData: string, callback: GraphLoadingCallba
   } catch (e) {
     return callback(e);
   }
-  return exports.loadJSON(definition, callback, metadata);
-};
+  return loadJSON(definition, callback, metadata);
+}
 
 function loadHTTP(url: string, callback: StringLoadingCallback) {
   const req = new XMLHttpRequest();
@@ -1127,9 +1127,9 @@ function loadHTTP(url: string, callback: StringLoadingCallback) {
   };
   req.open('GET', url, true);
   req.send();
-};
+}
 
-exports.loadFile = function loadFile(file: string, callback: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
+function loadFile(file: string, callback: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
   if (isBrowser()) {
     // On browser we can try getting the file via AJAX
     loadHTTP(file, (err: Error | null, data?: string) => {
@@ -1137,10 +1137,15 @@ exports.loadFile = function loadFile(file: string, callback: GraphLoadingCallbac
         callback(err);
         return;
       }
-      if (file.split('.').pop() === 'fbp') {
-        return exports.loadFBP(data, callback, metadata);
+      if (!data) {
+        callback(new Error('No data received'));
+        return;
       }
-      return exports.loadJSON(data, callback, metadata);
+      if (file.split('.').pop() === 'fbp') {
+        loadFBP(data, callback, metadata);
+        return;
+      }
+      loadJSON(data, callback, metadata);
     });
     return;
   }
@@ -1153,13 +1158,13 @@ exports.loadFile = function loadFile(file: string, callback: GraphLoadingCallbac
     }
 
     if (file.split('.').pop() === 'fbp') {
-      exports.loadFBP(data, callback, {}, caseSensitive);
+      loadFBP(data, callback, {}, caseSensitive);
       return;
     }
 
-    exports.loadJSON(data, callback, {});
+    loadJSON(data, callback, {});
   });
-};
+}
 
 // remove everything in the graph
 function resetGraph(graph: Graph) {
@@ -1225,10 +1230,18 @@ function mergeResolveTheirsNaive(base: Graph, to: Graph) {
   });
 }
 
-exports.equivalent = function equivalent(a: Graph, b: Graph): boolean {
+function equivalent(a: Graph, b: Graph): boolean {
   // TODO: add option to only compare known fields
   // TODO: add option to ignore metadata
   return (JSON.stringify(a) === JSON.stringify(b));
-};
+}
 
-exports.mergeResolveTheirs = mergeResolveTheirsNaive;
+export {
+  Graph,
+  createGraph,
+  loadJSON,
+  loadFBP,
+  loadFile,
+  equivalent,
+  mergeResolveTheirsNaive as mergeResolveTheirs,
+};

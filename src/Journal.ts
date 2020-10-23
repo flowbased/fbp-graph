@@ -397,6 +397,8 @@ class Journal extends EventEmitter {
   }
 }
 
-exports.Journal = Journal;
-exports.JournalStore = JournalStore;
-exports.MemoryJournalStore = MemoryJournalStore;
+export {
+  Journal,
+  JournalStore,
+  MemoryJournalStore,
+};
