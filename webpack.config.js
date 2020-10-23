@@ -7,13 +7,9 @@ module.exports = {
   resolve: {
     extensions: ['.js'],
     fallback: {
-      fs: false,
-      /*
-      buffer: require.resolve('buffer/'),
       events: require.resolve('events/'),
-      path: require.resolve('path-browserify'),
-      url: require.resolve('url/'),
-      */
+      fs: false,
+      tv4: false,
     },
   },
   externals: {
