@@ -22,6 +22,7 @@ module.exports = function () {
         options: {
           reporter: 'spec',
           grep: process.env.TESTS,
+          require: 'spec/utils/inject.js',
         },
       },
     },

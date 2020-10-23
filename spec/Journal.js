@@ -1,14 +1,4 @@
 describe('FBP Graph Journal', () => {
-  let chai; let lib;
-  if ((typeof process !== 'undefined') && process.execPath && process.execPath.match(/node|iojs/)) {
-    // eslint-disable-next-line global-require
-    if (!chai) { chai = require('chai'); }
-    // eslint-disable-next-line global-require
-    lib = require('../index');
-  } else {
-    // eslint-disable-next-line global-require,import/no-unresolved
-    lib = require('fbp-graph');
-  }
   describe('journalling operations', () => {
     describe('connected to initialized graph', () => {
       const g = new lib.graph.Graph();

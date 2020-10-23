@@ -14,7 +14,8 @@
   "globals": {
     "baseDir": false,
     "chai": false,
-    "noflo": false,
+    "lib": false,
+    "browser": false,
     "window": false
   }
 }

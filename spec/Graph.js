@@ -1,18 +1,4 @@
 describe('FBP Graph', () => {
-  let browser;
-  let lib;
-  let chai;
-  if ((typeof process !== 'undefined') && process.execPath && process.execPath.match(/node|iojs/)) {
-    // eslint-disable-next-line global-require
-    if (!chai) { chai = require('chai'); }
-    // eslint-disable-next-line global-require
-    lib = require('../index');
-    browser = false;
-  } else {
-    // eslint-disable-next-line global-require,import/no-unresolved
-    lib = require('fbp-graph');
-    browser = true;
-  }
   describe('with case sensitivity', () => {
     describe('Unnamed graph instance', () => it('should have an empty name', () => {
       const g = new lib.graph.Graph();
