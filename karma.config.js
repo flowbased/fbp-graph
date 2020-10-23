@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 module.exports = (config) => {
   const configuration = {
     basePath: process.cwd(),
@@ -9,10 +10,19 @@ module.exports = (config) => {
       'mocha',
     ],
     files: [
-      'browser/fbp-graph.js',
-      'spec/utils/inject.js',
       'spec/*.js',
     ],
+    preprocessors: {
+      'spec/*.js': ['webpack'],
+    },
+    webpack: {
+      plugins: [
+        new webpack.IgnorePlugin(/tv4/),
+      ],
+      node: {
+        fs: 'empty',
+      },
+    },
     browsers: ['ChromeHeadless'],
     logLevel: config.LOG_WARN,
     singleRun: true,

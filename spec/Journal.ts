@@ -1,3 +1,6 @@
+import * as lib from '../lib/index';
+import * as chai from 'chai';
+
 describe('FBP Graph Journal', () => {
   describe('journalling operations', () => {
     describe('connected to initialized graph', () => {
@@ -123,6 +126,7 @@ DEL Foo(Bar)
       });
       it('redoing group add', () => {
         j.redo();
+        // @ts-ignore
         chai.expect(g.groups[0].metadata.label).to.equal('all nodes');
       });
 
@@ -133,24 +137,31 @@ DEL Foo(Bar)
       });
       it('undoing group metadata change', () => {
         j.undo();
+        // @ts-ignore
         chai.expect(g.groups[0].metadata.label).to.equal('all nodes');
       });
       it('redoing group metadata change', () => {
         j.redo();
+        // @ts-ignore
         chai.expect(g.groups[0].metadata.label).to.equal('ALL NODES!');
       });
 
       it('setting node metadata', () => {
         g.setNodeMetadata('Foo', { oneone: 11, 2: 'two' });
+        // @ts-ignore
         chai.expect(Object.keys(g.getNode('Foo').metadata).length).to.equal(2);
       });
       it('undoing set node metadata', () => {
         j.undo();
+        // @ts-ignore
         chai.expect(Object.keys(g.getNode('Foo').metadata).length).to.equal(0);
       });
       it('redoing set node metadata', () => {
         j.redo();
-        chai.expect(g.getNode('Foo').metadata.oneone).to.equal(11);
+        const node = g.getNode('Foo');
+        chai.expect(node).to.be.an('object');
+        // @ts-ignore
+        chai.expect(node.metadata.oneone).to.equal(11);
       });
     });
   });
@@ -210,10 +221,10 @@ DEL Foo(Bar)
   { "data": "Cheers, world!", "tgt": { "process": "Bar2", "port": "arr" } }
 ]
 }`;
-    let a = null;
-    let b = null;
-    let g = null; // one we modify
-    let j = null;
+    let a;
+    let b;
+    let g; // one we modify
+    let j;
     describe('G -> B', () => {
       it('G starts out as A', (done) => {
         lib.graph.loadJSON(JSON.parse(A), (err, instance) => {

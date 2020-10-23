@@ -1,6 +1,7 @@
 /node_modules/
 /browser/
-spec/result.xml
+spec/*.js
+spec/*.map
 npm-debug.log
 package-lock.json
 .DS_Store
