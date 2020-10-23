@@ -94,8 +94,8 @@ DEL Foo(Bar)
       g.addEdge('Foo', 'out', 'Baz', 'in');
       g.addInitial(42, 'Foo', 'in');
       const graphBeforeError = g.toJSON();
-      chai.expect(g.nodes.length).to.equal(2);
       it('undo should restore previous revision', () => {
+        chai.expect(g.nodes.length).to.equal(2);
         g.removeNode('Foo');
         chai.expect(g.nodes.length).to.equal(1);
         j.undo();
