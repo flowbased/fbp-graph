@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "clone": "^2.1.0",
+    "deep-eql": "^4.0.0",
     "fbp": "^1.6.0"
   },
   "nyc": {
