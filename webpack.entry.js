@@ -1,5 +1,5 @@
 /* eslint-env browser */
-const fbpGraph = require('./index.js');
+const fbpGraph = require('./lib/index.js');
 
 const exported = {
   'fbp-graph': fbpGraph,

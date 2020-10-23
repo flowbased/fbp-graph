@@ -68,7 +68,7 @@ describe('FBP Graph', () => {
         });
         it('should not be available after removal', () => {
           const node = g.getNode('Foo');
-          chai.expect(node).to.be.a('undefined');
+          chai.expect(node).to.be.a('null');
           chai.expect(g.nodes.length).to.equal(0);
           chai.expect(g.nodes.indexOf(n)).to.equal(-1);
         });
@@ -409,7 +409,7 @@ describe('FBP Graph', () => {
           chai.expect(g.getNode('Baz')).to.be.an('object');
         });
         it('shouldn\'t be available with the old name', () => {
-          chai.expect(g.getNode('Foo')).to.be.a('undefined');
+          chai.expect(g.getNode('Foo')).to.be.a('null');
         });
         it('should have the edge still going from it', () => {
           let connection = null;

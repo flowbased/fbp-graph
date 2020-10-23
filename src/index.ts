@@ -1,5 +1,5 @@
-const journal = require('./lib/Journal');
-const graph = require('./lib/Graph');
+const journal = require('./Journal');
+const graph = require('./Graph');
 const { Journal } = journal;
 const { Graph } = graph;
 
