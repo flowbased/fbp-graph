@@ -1,7 +1,7 @@
 .git*
 /components/*/
 /browser/
-/spec/*.js
 /spec/*.xml
 /.nyc_output/
 .travis.yml
+.github

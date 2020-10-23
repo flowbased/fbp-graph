@@ -1,9 +1,13 @@
+
 export type TransactionEntry = {
   cmd: string,
   args: {
     [key : string]: any,
   },
-  rev: number,
+  rev: number | null,
+};
+export type JournalMetadata = {
+  [key : string]: any,
 };
 
 export type GraphOptions = {
@@ -18,6 +22,10 @@ export type GraphNodeID = string;
 export type GraphNodeMetadata = PropertyMap;
 export type GraphNode = {
   id: GraphNodeID,
+  component: string,
+  metadata?: GraphNodeMetadata,
+}
+export type GraphJsonNode = {
   component: string,
   metadata?: GraphNodeMetadata,
 }
@@ -37,11 +45,12 @@ export type GraphEdge = {
   metadata?: GraphEdgeMetadata,
 }
 export type GraphJsonEdge = {
-  src: {
+  src?: {
     process: GraphNodeID,
     port: string,
     index?: number,
-  },
+  }
+  data?: any,
   tgt: {
     process: GraphNodeID,
     port: string,
@@ -63,16 +72,6 @@ export type GraphIIP = {
   metadata?: GraphIIPMetadata,
 }
 
-export type GraphJsonIIP = {
-  data: any,
-  tgt: {
-    process: GraphNodeID,
-    port: string,
-    index?: number,
-  },
-  metadata?: GraphIIPMetadata,
-};
-
 export type GraphExportedPort = {
   process: GraphNodeID,
   port: string,
@@ -85,3 +84,20 @@ export type GraphGroup = {
   nodes: Array<GraphNodeID>,
   metadata?: GraphGroupMetadata,
 };
+
+export type GraphJson = {
+  caseSensitive?: boolean,
+  properties?: PropertyMap,
+  processes?: {
+    [key: string]: GraphJsonNode,
+  },
+  connections?: Array<GraphJsonEdge>,
+  inports?: {
+    [key: string]: GraphExportedPort,
+  },
+  outports?: {
+    [key: string]: GraphExportedPort,
+  },
+  groups?: Array<GraphGroup>,
+};
+

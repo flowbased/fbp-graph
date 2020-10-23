@@ -13,6 +13,10 @@ export default class MemoryJournalStore extends JournalStore {
     this.transactions = [];
   }
 
+  countTransactions(): number {
+    return this.transactions.length;
+  }
+
   putTransaction(revId: number, entries: Array<TransactionEntry>) {
     super.putTransaction(revId, entries);
     this.transactions[revId] = entries;

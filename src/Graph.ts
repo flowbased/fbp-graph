@@ -8,18 +8,23 @@
 /* eslint-env browser, node */
 import { EventEmitter } from 'events';
 import * as clone from 'clone';
-import * as deepEqual from 'deep-eql';
 import { isBrowser } from './Platform';
 import {
+  JournalMetadata,
   GraphOptions,
   PropertyMap,
   GraphNode,
+  GraphNodeMetadata,
+  GraphNodeID,
   GraphEdge,
+  GraphEdgeMetadata,
   GraphJsonEdge,
   GraphIIP,
-  GraphJsonIIP,
+  GraphIIPMetadata,
   GraphExportedPort,
   GraphGroup,
+  GraphGroupMetadata,
+  GraphJson,
 } from './Types';
 
 // This class represents an abstract FBP graph containing nodes
@@ -47,7 +52,7 @@ export default class Graph extends EventEmitter {
   };
   groups: Array<GraphGroup>;
   transaction: {
-    id: string,
+    id: string | null,
     depth: number,
   };
   caseSensitive: boolean;
@@ -70,7 +75,7 @@ export default class Graph extends EventEmitter {
     this.caseSensitive = options.caseSensitive || false;
   }
 
-  getPortName(port = ''): string {
+  getPortName(port: string = ''): string {
     if (this.caseSensitive) {
       return port;
     }
@@ -81,7 +86,7 @@ export default class Graph extends EventEmitter {
   //
   // If no transaction is explicitly opened, each call to
   // the graph API will implicitly create a transaction for that change
-  startTransaction(id: string, metadata = {}) {
+  startTransaction(id: string, metadata: JournalMetadata = {}) {
     if (this.transaction.id) {
       throw Error('Nested transactions not supported');
     }
@@ -91,7 +96,7 @@ export default class Graph extends EventEmitter {
     this.emit('startTransaction', id, metadata);
   }
 
-  endTransaction(id: string, metadata = {}) {
+  endTransaction(id: string, metadata: JournalMetadata = {}) {
     if (!this.transaction.id) {
       throw Error('Attempted to end non-existing transaction');
     }
@@ -121,7 +126,7 @@ export default class Graph extends EventEmitter {
   // ## Modifying Graph properties
   //
   // This method allows changing properties of the graph.
-  setProperties(properties) {
+  setProperties(properties: PropertyMap) {
     this.checkTransactionStart();
     const before = clone(this.properties);
     Object.keys(properties).forEach((item) => {
@@ -132,7 +137,7 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  addInport(publicPort, nodeKey, portKey, metadata) {
+  addInport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata) {
     // Check that node exists
     if (!this.getNode(nodeKey)) { return; }
 
@@ -147,7 +152,7 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  removeInport(publicPort) {
+  removeInport(publicPort: string) {
     const portName = this.getPortName(publicPort);
     if (!this.inports[portName]) { return; }
 
@@ -159,7 +164,7 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  renameInport(oldPort, newPort) {
+  renameInport(oldPort: string, newPort: string) {
     const oldPortName = this.getPortName(oldPort);
     const newPortName = this.getPortName(newPort);
     if (!this.inports[oldPortName]) { return; }
@@ -172,28 +177,32 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  setInportMetadata(publicPort, metadata) {
+  setInportMetadata(publicPort:string, metadata: GraphNodeMetadata) {
     const portName = this.getPortName(publicPort);
     if (!this.inports[portName]) { return; }
 
     this.checkTransactionStart();
-    const before = clone(this.inports[portName].metadata);
     if (!this.inports[portName].metadata) {
       this.inports[portName].metadata = {};
     }
+    const before = clone(this.inports[portName].metadata);
     Object.keys(metadata).forEach((item) => {
       const val = metadata[item];
+      const existingMeta = this.inports[portName].metadata;
+      if (!existingMeta) {
+        return;
+      }
       if (val != null) {
-        this.inports[portName].metadata[item] = val;
+        existingMeta[item] = val;
       } else {
-        delete this.inports[portName].metadata[item];
+        delete existingMeta[item];
       }
     });
     this.emit('changeInport', portName, this.inports[portName], before, metadata);
     this.checkTransactionEnd();
   }
 
-  addOutport(publicPort, nodeKey, portKey, metadata) {
+  addOutport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata) {
     // Check that node exists
     if (!this.getNode(nodeKey)) { return; }
 
@@ -209,7 +218,7 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  removeOutport(publicPort) {
+  removeOutport(publicPort: string) {
     const portName = this.getPortName(publicPort);
     if (!this.outports[portName]) { return; }
 
@@ -223,7 +232,7 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  renameOutport(oldPort, newPort) {
+  renameOutport(oldPort: string, newPort: string) {
     const oldPortName = this.getPortName(oldPort);
     const newPortName = this.getPortName(newPort);
     if (!this.outports[oldPortName]) { return; }
@@ -235,7 +244,7 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  setOutportMetadata(publicPort, metadata) {
+  setOutportMetadata(publicPort: string, metadata: GraphNodeMetadata) {
     const portName = this.getPortName(publicPort);
     if (!this.outports[portName]) { return; }
 
@@ -246,10 +255,14 @@ export default class Graph extends EventEmitter {
     }
     Object.keys(metadata).forEach((item) => {
       const val = metadata[item];
+      const existingMeta = this.outports[portName].metadata;
+      if (!existingMeta) {
+        return;
+      }
       if (val != null) {
-        this.outports[portName].metadata[item] = val;
+        existingMeta[item] = val;
       } else {
-        delete this.outports[portName].metadata[item];
+        delete existingMeta[item];
       }
     });
     this.emit('changeOutport', portName, this.outports[portName], before, metadata);
@@ -258,7 +271,7 @@ export default class Graph extends EventEmitter {
 
   // ## Grouping nodes in a graph
   //
-  addGroup(group, nodes, metadata) {
+  addGroup(group: string, nodes: Array<GraphNodeID>, metadata: GraphGroupMetadata): GraphGroup {
     this.checkTransactionStart();
 
     const g = {
@@ -270,9 +283,11 @@ export default class Graph extends EventEmitter {
     this.emit('addGroup', g);
 
     this.checkTransactionEnd();
+
+    return g;
   }
 
-  renameGroup(oldName, newName) {
+  renameGroup(oldName: string, newName: string) {
     this.checkTransactionStart();
     this.groups.forEach((group) => {
       if (!group) { return; }
@@ -284,7 +299,7 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  removeGroup(groupName) {
+  removeGroup(groupName: string) {
     this.checkTransactionStart();
     this.groups = this.groups.filter((group) => {
       if (!group) { return false; }
@@ -296,7 +311,7 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  setGroupMetadata(groupName, metadata) {
+  setGroupMetadata(groupName: string, metadata: GraphGroupMetadata) {
     this.checkTransactionStart();
     this.groups.forEach((group) => {
       if (!group) { return; }
@@ -305,6 +320,9 @@ export default class Graph extends EventEmitter {
       Object.keys(metadata).forEach((item) => {
         const val = metadata[item];
         const g = group;
+        if (!g.metadata) {
+          return;
+        }
         if (val != null) {
           g.metadata[item] = val;
         } else {
@@ -329,7 +347,7 @@ export default class Graph extends EventEmitter {
   //       y: 154
   //
   // Addition of a node will emit the `addNode` event.
-  addNode(id, component, metadata = {}) {
+  addNode(id: GraphNodeID, component: string, metadata: GraphNodeMetadata = {}): GraphNode {
     this.checkTransactionStart();
     const node = {
       id,
@@ -352,7 +370,7 @@ export default class Graph extends EventEmitter {
   //
   // Once the node has been removed, the `removeNode` event will be
   // emitted.
-  removeNode(id) {
+  removeNode(id: GraphNodeID) {
     const node = this.getNode(id);
     if (!node) {
       return;
@@ -407,14 +425,18 @@ export default class Graph extends EventEmitter {
   // Nodes objects can be retrieved from the graph by their ID:
   //
   //     myNode = myGraph.getNode 'Read'
-  getNode(id): GraphNode {
-    return this.nodes.find((node) => node && node.id === id);
+  getNode(id: GraphNodeID): GraphNode | null {
+    const node = this.nodes.find((node) => node && node.id === id);
+    if (!node) {
+      return null;
+    }
+    return node;
   }
 
   // ## Renaming a node
   //
   // Nodes IDs can be changed by calling this method.
-  renameNode(oldId, newId) {
+  renameNode(oldId: GraphNodeID, newId: GraphNodeID) {
     this.checkTransactionStart();
 
     const node = this.getNode(oldId);
@@ -468,7 +490,7 @@ export default class Graph extends EventEmitter {
   // ## Changing a node's metadata
   //
   // Node metadata can be set or changed by calling this method.
-  setNodeMetadata(id, metadata) {
+  setNodeMetadata(id: GraphNodeID, metadata: GraphNodeMetadata) {
     const node = this.getNode(id);
     if (!node) { return; }
 
@@ -480,6 +502,9 @@ export default class Graph extends EventEmitter {
     const before = clone(node.metadata);
 
     Object.keys(metadata).forEach((item) => {
+      if (!node.metadata) {
+        return;
+      }
       const val = metadata[item];
       if (val != null) {
         node.metadata[item] = val;
@@ -501,7 +526,7 @@ export default class Graph extends EventEmitter {
   //     myGraph.addEdgeIndex 'Read', 'out', null, 'Display', 'in', 2
   //
   // Adding an edge will emit the `addEdge` event.
-  addEdge(outNode, outPort, inNode, inPort, metadata = {}) {
+  addEdge(outNode: GraphNodeID, outPort: string, inNode: GraphNodeID, inPort: string, metadata: GraphEdgeMetadata = {}): GraphEdge | null {
     const outPortName = this.getPortName(outPort);
     const inPortName = this.getPortName(inPort);
     if (this.edges.some((edge) => {
@@ -544,7 +569,7 @@ export default class Graph extends EventEmitter {
   }
 
   // Adding an edge will emit the `addEdge` event.
-  addEdgeIndex(outNode, outPort, outIndex, inNode, inPort, inIndex, metadata = {}) {
+  addEdgeIndex(outNode: GraphNodeID, outPort: string, outIndex: number | undefined, inNode: GraphNodeID, inPort: string, inIndex: number | undefined, metadata: GraphEdgeMetadata = {}): GraphEdge | null {
     const outPortName = this.getPortName(outPort);
     const inPortName = this.getPortName(inPort);
     const inIndexVal = (inIndex === null) ? undefined : inIndex;
@@ -600,7 +625,7 @@ export default class Graph extends EventEmitter {
   //     myGraph.removeEdge 'Display', 'out', 'Foo', 'in'
   //
   // Removing a connection will emit the `removeEdge` event.
-  removeEdge(node, port, node2, port2) {
+  removeEdge(node: GraphNodeID, port: string, node2: GraphNodeID, port2: string) {
     if (!this.getEdge(node, port, node2, port2)) {
       return;
     }
@@ -634,10 +659,10 @@ export default class Graph extends EventEmitter {
   // Edge objects can be retrieved from the graph by the node and port IDs:
   //
   //     myEdge = myGraph.getEdge 'Read', 'out', 'Write', 'in'
-  getEdge(node, port, node2, port2) {
+  getEdge(node: GraphNodeID, port: string, node2: GraphNodeID, port2: string): GraphEdge | null {
     const outPort = this.getPortName(port);
     const inPort = this.getPortName(port2);
-    return this.edges.find((edge) => {
+    const edge = this.edges.find((edge) => {
       if (!edge) {
         return false;
       }
@@ -649,12 +674,16 @@ export default class Graph extends EventEmitter {
       }
       return false;
     });
+    if (!edge) {
+      return null;
+    }
+    return edge;
   }
 
   // ## Changing an edge's metadata
   //
   // Edge metadata can be set or changed by calling this method.
-  setEdgeMetadata(node, port, node2, port2, metadata) {
+  setEdgeMetadata(node: GraphNodeID, port: string, node2: GraphNodeID, port2: string, metadata: GraphEdgeMetadata) {
     const edge = this.getEdge(node, port, node2, port2);
     if (!edge) { return; }
 
@@ -664,7 +693,10 @@ export default class Graph extends EventEmitter {
 
     Object.keys(metadata).forEach((item) => {
       const val = metadata[item];
-      if (val != null) {
+      if (!edge.metadata) {
+        edge.metadata = {};
+      }
+      if (val !== null) {
         edge.metadata[item] = val;
       } else {
         delete edge.metadata[item];
@@ -694,7 +726,7 @@ export default class Graph extends EventEmitter {
   //     myGraph.addGraphInitialIndex 'somefile.txt', 'file', 2
   //
   // Adding an IIP will emit a `addInitial` event.
-  addInitial(data, node, port, metadata = {}) {
+  addInitial(data: any, node: GraphNodeID, port: string, metadata: GraphIIPMetadata): GraphIIP | null {
     if (!this.getNode(node)) {
       return null;
     }
@@ -718,7 +750,7 @@ export default class Graph extends EventEmitter {
     return initializer;
   }
 
-  addInitialIndex(data, node, port, index, metadata) {
+  addInitialIndex(data: any, node: GraphNodeID, port: string, index: number, metadata: GraphIIPMetadata): GraphIIP | null {
     if (!this.getNode(node)) { return null; }
 
     const indexVal = (index === null) ? undefined : index;
@@ -743,13 +775,13 @@ export default class Graph extends EventEmitter {
     return initializer;
   }
 
-  addGraphInitial(data, node, metadata) {
+  addGraphInitial(data: any, node: string, metadata: GraphIIPMetadata): GraphIIP | null {
     const inport = this.inports[node];
     if (!inport) { return null; }
     return this.addInitial(data, inport.process, inport.port, metadata);
   }
 
-  addGraphInitialIndex(data, node, index, metadata) {
+  addGraphInitialIndex(data: any, node: string, index: number, metadata: GraphIIPMetadata): GraphIIP | null {
     const inport = this.inports[node];
     if (!inport) { return null; }
     return this.addInitialIndex(data, inport.process, inport.port, index, metadata);
@@ -768,7 +800,7 @@ export default class Graph extends EventEmitter {
   //     myGraph.removeGraphInitial 'file'
   //
   // Remove an IIP will emit a `removeInitial` event.
-  removeInitial(node, port) {
+  removeInitial(node: GraphNodeID, port: string) {
     const portName = this.getPortName(port);
     this.checkTransactionStart();
 
@@ -783,16 +815,16 @@ export default class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  removeGraphInitial(node) {
+  removeGraphInitial(node: string) {
     const inport = this.inports[node];
     if (!inport) { return; }
     this.removeInitial(inport.process, inport.port);
   }
 
-  toDOT() {
-    const cleanId = (id) => id.replace(/"/g, '\\"');
-    const cleanPort = (port) => port.replace(/\./g, '');
-    const wrapQuotes = (id) => `"${cleanId(id)}"`;
+  toDOT(): string {
+    const cleanId = (id: string): string => id.replace(/"/g, '\\"');
+    const cleanPort = (port: string): string => port.replace(/\./g, '');
+    const wrapQuotes = (id: string): string => `"${cleanId(id)}"`;
 
     let dot = 'digraph {\n';
 
@@ -820,8 +852,8 @@ export default class Graph extends EventEmitter {
     return dot;
   }
 
-  toYUML() {
-    const yuml = [];
+  toYUML():string {
+    const yuml: Array<string> = [];
 
     this.initializers.forEach((initializer) => {
       yuml.push(`(start)[${initializer.to.port}]->(${initializer.to.node})`);
@@ -834,8 +866,8 @@ export default class Graph extends EventEmitter {
     return yuml.join(',');
   }
 
-  toJSON() {
-    const json = {
+  toJSON(): GraphJson {
+    const json: GraphJson = {
       caseSensitive: this.caseSensitive,
       properties: {
         name: this.name,
@@ -852,7 +884,7 @@ export default class Graph extends EventEmitter {
           name: group.name,
           nodes: group.nodes,
         };
-        if (Object.keys(group.metadata).length) {
+        if (group.metadata && Object.keys(group.metadata).length) {
           groupData.metadata = {
             ...group.metadata,
           };
@@ -864,6 +896,9 @@ export default class Graph extends EventEmitter {
     };
 
     this.nodes.forEach((node) => {
+      if (!json.processes) {
+        json.processes = {};
+      }
       json.processes[node.id] = {
         component: node.component,
       };
@@ -892,11 +927,14 @@ export default class Graph extends EventEmitter {
           ...edge.metadata,
         };
       }
+      if (!json.connections) {
+        json.connections = [];
+      }
       json.connections.push(connection);
     });
 
     this.initializers.forEach((initializer: GraphIIP) => {
-      const iip: GraphJsonIIP = {
+      const iip: GraphJsonEdge = {
         data: initializer.from.data,
         tgt: {
           process: initializer.to.node,
@@ -909,13 +947,16 @@ export default class Graph extends EventEmitter {
           ...initializer.metadata,
         };
       }
+      if (!json.connections) {
+        json.connections = [];
+      }
       json.connections.push(iip);
     });
 
     return json;
   }
 
-  save(file, callback) {
+  save(file: string, callback: (err: Error | null, filename?: string) => void) {
     if (isBrowser()) {
       callback(new Error('Saving graphs not supported on browser'));
       return;
@@ -927,7 +968,7 @@ export default class Graph extends EventEmitter {
       filename = `${file}.json`;
     }
     // eslint-disable-next-line global-require
-    require('fs').writeFile(filename, json, 'utf-8', (err) => {
+    require('fs').writeFile(filename, json, 'utf-8', (err: Error | null) => {
       if (err) {
         callback(err);
         return;
@@ -939,10 +980,19 @@ export default class Graph extends EventEmitter {
 
 exports.Graph = Graph;
 
-exports.createGraph = (name, options) => new Graph(name, options);
+exports.createGraph = (name: string, options: GraphOptions): Graph => new Graph(name, options);
 
-exports.loadJSON = function loadJson(passedDefinition, callback, metadata = {}) {
-  let definition;
+interface GraphLoadingCallback {
+  (err: Error): void;
+  (err: null, graph: Graph): void;
+}
+interface StringLoadingCallback {
+  (err: Error): void;
+  (err: null, result: string): void;
+}
+
+exports.loadJSON = function loadJson(passedDefinition: string | GraphJson, callback: GraphLoadingCallback, metadata: JournalMetadata = {}) {
+  let definition: GraphJson;
   if (typeof passedDefinition === 'string') {
     definition = JSON.parse(passedDefinition);
   } else {
@@ -958,17 +1008,23 @@ exports.loadJSON = function loadJson(passedDefinition, callback, metadata = {}) 
   });
 
   graph.startTransaction('loadJSON', metadata);
-  const properties = {};
+  const properties: PropertyMap = {};
   Object.keys(definition.properties).forEach((property) => {
-    const value = definition.properties[property];
     if (property === 'name') {
       return;
     }
+    if (!definition.properties) {
+      return;
+    }
+    const value: any = definition.properties[property];
     properties[property] = value;
   });
   graph.setProperties(properties);
 
   Object.keys(definition.processes).forEach((id) => {
+    if (!definition.processes) {
+      return;
+    }
     const def = definition.processes[id];
     if (!def.metadata) { def.metadata = {}; }
     graph.addNode(id, def.component, def.metadata);
@@ -976,7 +1032,7 @@ exports.loadJSON = function loadJson(passedDefinition, callback, metadata = {}) 
 
   definition.connections.forEach((conn) => {
     const meta = conn.metadata ? conn.metadata : {};
-    if (conn.data !== undefined) {
+    if (typeof conn.data !== 'undefined') {
       if (typeof conn.tgt.index === 'number') {
         graph.addInitialIndex(
           conn.data,
@@ -993,6 +1049,9 @@ exports.loadJSON = function loadJson(passedDefinition, callback, metadata = {}) 
           meta,
         );
       }
+      return;
+    }
+    if (typeof conn.src === 'undefined') {
       return;
     }
     if ((typeof conn.src.index === 'number') || (typeof conn.tgt.index === 'number')) {
@@ -1018,14 +1077,20 @@ exports.loadJSON = function loadJson(passedDefinition, callback, metadata = {}) 
 
   if (definition.inports) {
     Object.keys(definition.inports).forEach((pub) => {
+      if (!definition.inports || !definition.inports[pub]) {
+        return;
+      }
       const priv = definition.inports[pub];
-      graph.addInport(pub, priv.process, graph.getPortName(priv.port), priv.metadata);
+      graph.addInport(pub, priv.process, graph.getPortName(priv.port), priv.metadata || {});
     });
   }
   if (definition.outports) {
     Object.keys(definition.outports).forEach((pub) => {
+      if (!definition.outports || !definition.outports[pub]) {
+        return;
+      }
       const priv = definition.outports[pub];
-      graph.addOutport(pub, priv.process, graph.getPortName(priv.port), priv.metadata);
+      graph.addOutport(pub, priv.process, graph.getPortName(priv.port), priv.metadata || {});
     });
   }
 
@@ -1040,7 +1105,7 @@ exports.loadJSON = function loadJson(passedDefinition, callback, metadata = {}) 
   return callback(null, graph);
 };
 
-exports.loadFBP = function loadFBP(fbpData, callback, metadata = {}, caseSensitive = false) {
+exports.loadFBP = function loadFBP(fbpData: string, callback: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
   let definition;
   try {
     // eslint-disable-next-line global-require
@@ -1051,7 +1116,7 @@ exports.loadFBP = function loadFBP(fbpData, callback, metadata = {}, caseSensiti
   return exports.loadJSON(definition, callback, metadata);
 };
 
-exports.loadHTTP = function loadHTTP(url, callback) {
+function loadHTTP(url: string, callback: StringLoadingCallback) {
   const req = new XMLHttpRequest();
   req.onreadystatechange = () => {
     if (req.readyState !== 4) { return; }
@@ -1064,22 +1129,24 @@ exports.loadHTTP = function loadHTTP(url, callback) {
   req.send();
 };
 
-exports.loadFile = function loadFile(file, callback, metadata = {}, caseSensitive = false) {
+exports.loadFile = function loadFile(file: string, callback: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
   if (isBrowser()) {
     // On browser we can try getting the file via AJAX
-    exports.loadHTTP(file, (err, data) => {
-      if (err) { return callback(err); }
+    loadHTTP(file, (err: Error | null, data?: string) => {
+      if (err) {
+        callback(err);
+        return;
+      }
       if (file.split('.').pop() === 'fbp') {
         return exports.loadFBP(data, callback, metadata);
       }
-      const definition = JSON.parse(data);
-      return exports.loadJSON(definition, callback, metadata);
+      return exports.loadJSON(data, callback, metadata);
     });
     return;
   }
   // Node.js graph file
   // eslint-disable-next-line global-require
-  require('fs').readFile(file, 'utf-8', (err, data) => {
+  require('fs').readFile(file, 'utf-8', (err: Error, data: string) => {
     if (err) {
       callback(err);
       return;
@@ -1095,7 +1162,7 @@ exports.loadFile = function loadFile(file, callback, metadata = {}, caseSensitiv
 };
 
 // remove everything in the graph
-function resetGraph(graph) {
+function resetGraph(graph: Graph) {
   // Edges and similar first, to have control over the order
   // If we'd do nodes first, it will implicitly delete edges
   // Important to make journal transactions invertible
@@ -1128,7 +1195,7 @@ function resetGraph(graph) {
 
 // Note: Caller should create transaction
 // First removes everything in @base, before building it up to mirror @to
-function mergeResolveTheirsNaive(base, to) {
+function mergeResolveTheirsNaive(base: Graph, to: Graph) {
   resetGraph(base);
 
   to.nodes.forEach((node) => {
@@ -1138,26 +1205,30 @@ function mergeResolveTheirsNaive(base, to) {
     base.addEdge(edge.from.node, edge.from.port, edge.to.node, edge.to.port, edge.metadata);
   });
   to.initializers.forEach((iip) => {
-    base.addInitial(iip.from.data, iip.to.node, iip.to.port, iip.metadata);
+    if (typeof iip.to.index === 'number') {
+      base.addInitialIndex(iip.from.data, iip.to.node, iip.to.port, iip.to.index, iip.metadata || {});
+      return;
+    }
+    base.addInitial(iip.from.data, iip.to.node, iip.to.port, iip.metadata || {});
   });
   base.setProperties(to.properties);
   Object.keys(to.inports).forEach((pub) => {
     const priv = to.inports[pub];
-    base.addInport(pub, priv.process, priv.port, priv.metadata);
+    base.addInport(pub, priv.process, priv.port, priv.metadata || {});
   });
   Object.keys(to.outports).forEach((pub) => {
     const priv = to.outports[pub];
-    base.addOutport(pub, priv.process, priv.port, priv.metadata);
+    base.addOutport(pub, priv.process, priv.port, priv.metadata || {});
   });
   to.groups.forEach((group) => {
-    base.addGroup(group.name, group.nodes, group.metadata);
+    base.addGroup(group.name, group.nodes, group.metadata || {});
   });
 }
 
-exports.equivalent = function equivalent(a, b) {
+exports.equivalent = function equivalent(a: Graph, b: Graph): boolean {
   // TODO: add option to only compare known fields
   // TODO: add option to ignore metadata
-  return deepEqual(a.toJSON(), b.toJSON());
+  return (JSON.stringify(a) === JSON.stringify(b));
 };
 
 exports.mergeResolveTheirs = mergeResolveTheirsNaive;

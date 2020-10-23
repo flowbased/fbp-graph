@@ -5,14 +5,17 @@ import { TransactionEntry } from './Types';
 /**
  * General interface for journal storage
  */
-export default class JournalStore extends EventEmitter {
+export default abstract class JournalStore extends EventEmitter {
   graph: Graph;
   lastRevision: number;
-  transactions: Array<Array<TransactionEntry>>
-  constructor(graph ) {
+  constructor(graph: Graph) {
     super();
     this.graph = graph;
     this.lastRevision = 0;
+  }
+
+  countTransactions(): number {
+    return 0;
   }
 
   putTransaction(revId: number, entries: Array<TransactionEntry>) {

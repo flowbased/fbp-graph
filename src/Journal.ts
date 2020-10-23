@@ -10,7 +10,10 @@ import * as clone from 'clone';
 import Graph from './Graph';
 import JournalStore from './JournalStore';
 import MemoryJournalStore from './MemoryJournalStore';
-import { TransactionEntry } from './Types';
+import {
+  TransactionEntry,
+  JournalMetadata,
+} from './Types';
 
 function entryToPrettyString(entry: TransactionEntry): string {
   const a = entry.args;
@@ -44,8 +47,8 @@ function entryToPrettyString(entry: TransactionEntry): string {
 }
 
 // To set, not just update (append) metadata
-function calculateMeta(oldMeta, newMeta) {
-  const setMeta = {};
+function calculateMeta(oldMeta: JournalMetadata, newMeta: JournalMetadata): JournalMetadata {
+  const setMeta: JournalMetadata = {};
   Object.keys(oldMeta).forEach((k) => {
     setMeta[k] = null;
   });
@@ -70,7 +73,7 @@ class Journal extends EventEmitter {
   subscribed: boolean;
   store: JournalStore;
   currentRevision: number;
-  constructor(graph: Graph, metadata, store: JournalStore) {
+  constructor(graph: Graph, metadata: JournalMetadata, store: JournalStore) {
     super();
     this.graph = graph;
     // Entries added during this revision
@@ -79,7 +82,7 @@ class Journal extends EventEmitter {
     this.subscribed = true;
     this.store = store || new MemoryJournalStore(this.graph);
 
-    if (this.store.transactions.length === 0) {
+    if (this.store.countTransactions() === 0) {
       // Sync journal with current graph to start transaction history
       this.currentRevision = -1;
       this.startTransaction('initial', metadata);
@@ -93,7 +96,7 @@ class Journal extends EventEmitter {
         this.appendCommand('addInitial', iip);
       });
       if (Object.keys(this.graph.properties).length > 0) {
-        this.appendCommand('changeProperties', this.graph.properties, {});
+        this.appendCommand('changeProperties', this.graph.properties);
       }
       Object.keys(this.graph.inports).forEach((name) => {
         const port = this.graph.inports[name];
@@ -190,7 +193,7 @@ class Journal extends EventEmitter {
     });
   }
 
-  startTransaction(id, meta) {
+  startTransaction(id: string, meta: JournalMetadata) {
     if (!this.subscribed) { return; }
     if (this.entries.length > 0) {
       throw Error('Inconsistent @entries');
@@ -202,7 +205,7 @@ class Journal extends EventEmitter {
     }, this.currentRevision);
   }
 
-  endTransaction(id, meta) {
+  endTransaction(id: string, meta: JournalMetadata) {
     if (!this.subscribed) {
       return;
     }
@@ -217,7 +220,7 @@ class Journal extends EventEmitter {
     this.entries = [];
   }
 
-  appendCommand(cmd: string, args: object, rev = null) {
+  appendCommand(cmd: string, args: object, rev: number | null = null) {
     if (!this.subscribed) {
       return;
     }
@@ -240,7 +243,12 @@ class Journal extends EventEmitter {
       case 'addEdge': return this.graph.addEdge(a.from.node, a.from.port, a.to.node, a.to.port);
       case 'removeEdge': return this.graph.removeEdge(a.from.node, a.from.port, a.to.node, a.to.port);
       case 'changeEdge': return this.graph.setEdgeMetadata(a.from.node, a.from.port, a.to.node, a.to.port, calculateMeta(a.old, a.new));
-      case 'addInitial': return this.graph.addInitial(a.from.data, a.to.node, a.to.port);
+      case 'addInitial': {
+        if (typeof a.to.index === 'number') {
+          return this.graph.addInitialIndex(a.from.data, a.to.node, a.to.port, a.to.index, a.metadata);
+        }
+        return this.graph.addInitial(a.from.data, a.to.node, a.to.port, a.metadata);
+      }
       case 'removeInitial': return this.graph.removeInitial(a.to.node, a.to.port);
       case 'startTransaction': return null;
       case 'endTransaction': return null;
@@ -272,7 +280,12 @@ class Journal extends EventEmitter {
       case 'removeEdge': return this.graph.addEdge(a.from.node, a.from.port, a.to.node, a.to.port);
       case 'changeEdge': return this.graph.setEdgeMetadata(a.from.node, a.from.port, a.to.node, a.to.port, calculateMeta(a.new, a.old));
       case 'addInitial': return this.graph.removeInitial(a.to.node, a.to.port);
-      case 'removeInitial': return this.graph.addInitial(a.from.data, a.to.node, a.to.port);
+      case 'removeInitial': {
+        if (typeof a.to.index === 'number') {
+          return this.graph.addInitialIndex(a.from.data, a.to.node, a.to.port, a.to.index, a.metadata);
+        }
+        return this.graph.addInitial(a.from.data, a.to.node, a.to.port, a.metadata);
+      }
       case 'startTransaction': return null;
       case 'endTransaction': return null;
       case 'changeProperties': return this.graph.setProperties(a.old);
@@ -349,9 +362,9 @@ class Journal extends EventEmitter {
 
   // # Serializing
   // Render a pretty printed string of the journal. Changes are abbreviated
-  toPrettyString(startRev = 0, endRevParam): string {
+  toPrettyString(startRev = 0, endRevParam?: number): string {
     const endRev = endRevParam || this.store.lastRevision;
-    const lines = [];
+    const lines: Array<string> = [];
     for (let r = startRev, end = endRev, asc = startRev <= end;
       asc ? r < end : r > end;
       asc ? r += 1 : r -= 1) {
@@ -366,7 +379,7 @@ class Journal extends EventEmitter {
   // Serialize journal to JSON
   toJSON(startRev = 0, endRevParam = null) {
     const endRev = endRevParam || this.store.lastRevision;
-    const entries = [];
+    const entries: Array<string> = [];
     for (let r = startRev, end = endRev; r < end; r += 1) {
       const e = this.store.fetchTransaction(r);
       e.forEach((entry) => {
@@ -376,13 +389,11 @@ class Journal extends EventEmitter {
     return entries;
   }
 
-  save(file, success) {
+  save(file: string, callback: (err: NodeJS.ErrnoException | null) => void) {
     const json = JSON.stringify(this.toJSON(), null, 4);
+    const { writeFile } = require('fs');
     // eslint-disable-next-line global-require
-    return require('fs').writeFile(`${file}.json`, json, 'utf-8', (err) => {
-      if (err) { throw err; }
-      return success(file);
-    });
+    writeFile(`${file}.json`, json, 'utf-8', callback);
   }
 }
 
