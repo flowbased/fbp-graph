@@ -3,6 +3,7 @@
   "version": "0.5.0",
   "description": "JavaScript FBP graph library",
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "lint": "eslint *.js lib/*.js spec/*.js",
     "build": "tsc",
