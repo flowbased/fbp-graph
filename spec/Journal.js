@@ -260,6 +260,7 @@ describe('Journalling of graph merges', () => {
       lib.graph.mergeResolveTheirs(g, b);
       g.endTransaction('merge');
       chai.expect(lib.graph.equivalent(g, b)).to.equal(true);
+      chai.expect(lib.graph.equivalent(g, a)).to.equal(false);
       done();
     });
     it('undoing merge should make G equivalent to A again', (done) => {
