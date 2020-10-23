@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 module.exports = (config) => {
   const configuration = {
     basePath: process.cwd(),
@@ -13,7 +14,15 @@ module.exports = (config) => {
     ],
     preprocessors: {
       'spec/*.js': ['webpack'],
-    }
+    },
+    webpack: {
+      plugins: [
+        new webpack.IgnorePlugin(/tv4/),
+      ],
+      node: {
+        fs: 'empty',
+      },
+    },
     browsers: ['ChromeHeadless'],
     logLevel: config.LOG_WARN,
     singleRun: true,
