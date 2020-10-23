@@ -1,5 +1,5 @@
 import JournalStore from './JournalStore';
-import Graph from './Graph';
+import { Graph } from './Graph';
 import { TransactionEntry } from './Types';
 
 /**

@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import Graph from './Graph';
+import { Graph } from './Graph';
 import { TransactionEntry } from './Types';
 
 /**

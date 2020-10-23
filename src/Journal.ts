@@ -1,13 +1,12 @@
 //     FBP Graph Journal
-//     (c) 2016-2017 Flowhub UG
+//     (c) 2016-2020 Flowhub UG
 //     (c) 2014 Jon Nordby
 //     (c) 2013 Flowhub UG
 //     (c) 2011-2012 Henri Bergius, Nemein
 //     FBP Graph may be freely distributed under the MIT license
-/// <reference path="Types.d.ts" />
 import { EventEmitter } from 'events';
 import * as clone from 'clone';
-import Graph from './Graph';
+import { Graph } from './Graph';
 import JournalStore from './JournalStore';
 import MemoryJournalStore from './MemoryJournalStore';
 import {

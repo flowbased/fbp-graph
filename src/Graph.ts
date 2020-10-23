@@ -32,7 +32,7 @@ import {
 //
 // These graphs can be used for visualization and sketching, but
 // also are the way to start a NoFlo or other FBP network.
-export default class Graph extends EventEmitter {
+class Graph extends EventEmitter {
   // ## Creating new graphs
   //
   // Graphs are created by simply instantiating the Graph class
