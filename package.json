@@ -53,6 +53,7 @@
   "nyc": {
     "include": [
       "lib/*.js"
-    ]
+    ],
+    "sourceMap": false
   }
 }
