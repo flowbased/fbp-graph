@@ -137,7 +137,7 @@ class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  addInport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata) {
+  addInport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata = {}) {
     // Check that node exists
     if (!this.getNode(nodeKey)) { return; }
 
@@ -202,7 +202,7 @@ class Graph extends EventEmitter {
     this.checkTransactionEnd();
   }
 
-  addOutport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata) {
+  addOutport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata = {}) {
     // Check that node exists
     if (!this.getNode(nodeKey)) { return; }
 
@@ -726,7 +726,7 @@ class Graph extends EventEmitter {
   //     myGraph.addGraphInitialIndex 'somefile.txt', 'file', 2
   //
   // Adding an IIP will emit a `addInitial` event.
-  addInitial(data: any, node: GraphNodeID, port: string, metadata: GraphIIPMetadata): GraphIIP | null {
+  addInitial(data: any, node: GraphNodeID, port: string, metadata: GraphIIPMetadata = {}): GraphIIP | null {
     if (!this.getNode(node)) {
       return null;
     }
@@ -750,7 +750,7 @@ class Graph extends EventEmitter {
     return initializer;
   }
 
-  addInitialIndex(data: any, node: GraphNodeID, port: string, index: number, metadata: GraphIIPMetadata): GraphIIP | null {
+  addInitialIndex(data: any, node: GraphNodeID, port: string, index: number, metadata: GraphIIPMetadata = {}): GraphIIP | null {
     if (!this.getNode(node)) { return null; }
 
     const indexVal = (index === null) ? undefined : index;
@@ -775,13 +775,13 @@ class Graph extends EventEmitter {
     return initializer;
   }
 
-  addGraphInitial(data: any, node: string, metadata: GraphIIPMetadata): GraphIIP | null {
+  addGraphInitial(data: any, node: string, metadata: GraphIIPMetadata = {}): GraphIIP | null {
     const inport = this.inports[node];
     if (!inport) { return null; }
     return this.addInitial(data, inport.process, inport.port, metadata);
   }
 
-  addGraphInitialIndex(data: any, node: string, index: number, metadata: GraphIIPMetadata): GraphIIP | null {
+  addGraphInitialIndex(data: any, node: string, index: number, metadata: GraphIIPMetadata = {}): GraphIIP | null {
     const inport = this.inports[node];
     if (!inport) { return null; }
     return this.addInitialIndex(data, inport.process, inport.port, index, metadata);

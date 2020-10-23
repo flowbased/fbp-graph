@@ -72,7 +72,7 @@ class Journal extends EventEmitter {
   subscribed: boolean;
   store: JournalStore;
   currentRevision: number;
-  constructor(graph: Graph, metadata: JournalMetadata, store: JournalStore) {
+  constructor(graph: Graph, metadata?: JournalMetadata, store?: JournalStore) {
     super();
     this.graph = graph;
     // Entries added during this revision
@@ -84,7 +84,7 @@ class Journal extends EventEmitter {
     if (this.store.countTransactions() === 0) {
       // Sync journal with current graph to start transaction history
       this.currentRevision = -1;
-      this.startTransaction('initial', metadata);
+      this.startTransaction('initial', metadata || {});
       this.graph.nodes.forEach((node) => {
         this.appendCommand('addNode', node);
       });
@@ -114,7 +114,7 @@ class Journal extends EventEmitter {
       this.graph.groups.forEach((group) => {
         this.appendCommand('addGroup', group);
       });
-      this.endTransaction('initial', metadata);
+      this.endTransaction('initial', metadata || {});
     } else {
       // Persistent store, start with its latest rev
       this.currentRevision = this.store.lastRevision;
