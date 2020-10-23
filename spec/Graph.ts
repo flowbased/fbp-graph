@@ -1,3 +1,7 @@
+import * as lib from '../lib/index';
+import * as chai from 'chai';
+import { isBrowser } from '../lib/Platform';
+
 describe('FBP Graph', () => {
   describe('with case sensitivity', () => {
     describe('Unnamed graph instance', () => it('should have an empty name', () => {
@@ -5,9 +9,8 @@ describe('FBP Graph', () => {
       chai.expect(g.name).to.equal('');
     }));
     describe('with new instance', () => {
-      let g = null;
+      let g = new lib.graph.Graph('Foo bar', { caseSensitive: true });
       it('should get a name from constructor', () => {
-        g = new lib.graph.Graph('Foo bar', { caseSensitive: true });
         chai.expect(g.name).to.equal('Foo bar');
       });
 
@@ -28,15 +31,15 @@ describe('FBP Graph', () => {
       });
 
       describe('New node', () => {
-        let n = null;
+        let n;
         it('should emit an event', (done) => {
           g.once('addNode', (node) => {
             chai.expect(node.id).to.equal('Foo');
             chai.expect(node.component).to.equal('Bar');
-            n = node;
+            chai.expect(node).to.equal(n);
             done();
           });
-          g.addNode('Foo', 'Bar');
+          n = g.addNode('Foo', 'Bar');
         });
         it('should be in graph\'s list of nodes', () => {
           chai.expect(g.nodes.length).to.equal(1);
@@ -44,18 +47,24 @@ describe('FBP Graph', () => {
         });
         it('should be accessible via the getter', () => {
           const node = g.getNode('Foo');
+          // @ts-ignore
           chai.expect(node.id).to.equal('Foo');
           chai.expect(node).to.equal(n);
         });
         it('should have empty metadata', () => {
           const node = g.getNode('Foo');
+          // @ts-ignore
           chai.expect(JSON.stringify(node.metadata)).to.equal('{}');
+          // @ts-ignore
           chai.expect(node.display).to.equal(undefined);
         });
         it('should be available in the JSON export', () => {
           const json = g.toJSON();
+          // @ts-ignore
           chai.expect(typeof json.processes.Foo).to.equal('object');
+          // @ts-ignore
           chai.expect(json.processes.Foo.component).to.equal('Bar');
+          // @ts-ignore
           chai.expect(json.processes.Foo.display).to.be.a('undefined');
         });
         it('removing should emit an event', (done) => {
@@ -104,9 +113,10 @@ describe('FBP Graph', () => {
             chai.expect(g.edges.length).equal(3);
             done();
           });
-          g.addEdgeIndex('Foo', 'out', null, 'Bar', 'in', 1);
+          g.addEdgeIndex('Foo', 'out', undefined, 'Bar', 'in', 1);
         });
         it('should add an edge', () => {
+          // @ts-ignore
           g.addEdgeIndex('Foo', 'out', 2, 'Bar', 'in2');
           chai.expect(g.edges.length).equal(4);
         });
@@ -252,7 +262,7 @@ describe('FBP Graph', () => {
 }\
 `;
       const json = JSON.parse(jsonString);
-      let g = null;
+      let g;
 
       it('should produce a Graph when input is string', (done) => lib.graph.loadJSON(jsonString, (err, instance) => {
         if (err) {
@@ -279,6 +289,10 @@ describe('FBP Graph', () => {
         lib.graph.loadJSON(json, (err, instance) => {
           if (err) {
             done(err);
+            return;
+          }
+          if (!instance) {
+            done(new Error('No graph loaded'));
             return;
           }
           instance.addNode('Split1', 'Split');
@@ -538,7 +552,7 @@ describe('FBP Graph', () => {
         chai.expect(g.edges.length).to.equal(3);
       });
       it('shouldn\'t contain the removed connection from Split1', () => {
-        let connection = null;
+        let connection;
         g.edges.forEach((edge) => {
           if ((edge.from.node === 'Split1') && (edge.to.node === 'Merge2')) {
             connection = edge;
@@ -547,7 +561,7 @@ describe('FBP Graph', () => {
         chai.expect(connection).to.equal(null);
       });
       it('should still contain the other connection from Split1', () => {
-        let connection = null;
+        let connection;
         g.edges.forEach((edge) => {
           if ((edge.from.node === 'Split1') && (edge.to.node === 'Merge1')) {
             connection = edge;
@@ -659,10 +673,10 @@ describe('FBP Graph', () => {
 
     describe('saving and loading files', () => {
       describe('with .json suffix', () => {
-        let originalGraph = null;
-        let graphPath = null;
+        let originalGraph;
+        let graphPath;
         before(function () {
-          if (browser) {
+          if (isBrowser()) {
             this.skip();
             return;
           }
@@ -671,7 +685,7 @@ describe('FBP Graph', () => {
           graphPath = path.resolve(__dirname, 'foo.json');
         });
         after((done) => {
-          if (browser) {
+          if (isBrowser()) {
             done();
             return;
           }
@@ -690,16 +704,20 @@ describe('FBP Graph', () => {
             done(err);
             return;
           }
+          if (!g) {
+            done(new Error('No graph'));
+            return;
+          }
           chai.expect(g.toJSON()).to.eql(originalGraph);
           done();
         }));
       });
       describe('without .json suffix', () => {
-        let graphPathLegacy = null;
-        let graphPathLegacySuffix = null;
-        let originalGraph = null;
+        let graphPathLegacy;
+        let graphPathLegacySuffix;
+        let originalGraph;
         before(function () {
-          if (browser) {
+          if (isBrowser()) {
             this.skip();
             return;
           }
@@ -709,7 +727,7 @@ describe('FBP Graph', () => {
           graphPathLegacySuffix = path.resolve(__dirname, 'bar.json');
         });
         after((done) => {
-          if (browser) {
+          if (isBrowser()) {
             done();
             return;
           }
@@ -729,6 +747,10 @@ describe('FBP Graph', () => {
               done(err);
               return;
             }
+            if (!g) {
+              done(new Error('No graph'));
+              return;
+            }
             chai.expect(g.toJSON()).to.eql(originalGraph);
             done();
           });
@@ -739,7 +761,7 @@ describe('FBP Graph', () => {
 
   describe('without case sensitivity', () => {
     describe('Graph operations should convert port names to lowercase', () => {
-      let g = null;
+      let g;
       beforeEach(() => {
         g = new lib.graph.Graph('Hola');
       });

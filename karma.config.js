@@ -9,10 +9,11 @@ module.exports = (config) => {
       'mocha',
     ],
     files: [
-      'browser/fbp-graph.js',
-      'spec/utils/inject.js',
       'spec/*.js',
     ],
+    preprocessors: {
+      'spec/*.js': ['webpack'],
+    }
     browsers: ['ChromeHeadless'],
     logLevel: config.LOG_WARN,
     singleRun: true,
