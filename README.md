@@ -27,5 +27,7 @@ fbpGraph.graph.loadFile('some/path.json', (err, graph) => {
 
 ## Changes
 
+* 0.5.0 (October 23rd 2020)
+  - Converted from CoffeeScript to modern JavaScript
 * 0.4.0 (December 7th 2018)
   - Original JSON loaded via `loadJSON` no longer gets mutated by the graph instance (thanks @davecarlson)
