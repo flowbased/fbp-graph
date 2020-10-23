@@ -982,13 +982,11 @@ function createGraph(name: string, options: GraphOptions): Graph {
   return new Graph(name, options);
 };
 
-interface GraphLoadingCallback {
-  (err: Error): void;
-  (err: null, graph: Graph): void;
+export interface GraphLoadingCallback {
+  (err: Error | null, graph?: Graph): void;
 }
 interface StringLoadingCallback {
-  (err: Error): void;
-  (err: null, result: string): void;
+  (err: Error | null, result?: string): void;
 }
 
 function loadJSON(passedDefinition: string | GraphJson, callback: GraphLoadingCallback, metadata: JournalMetadata = {}) {
