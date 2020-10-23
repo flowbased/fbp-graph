@@ -2,9 +2,11 @@
   "name": "fbp-graph",
   "version": "0.5.0",
   "description": "JavaScript FBP graph library",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
-    "pretest": "eslint *.js lib/*.js spec/*.js",
+    "lint": "eslint *.js lib/*.js spec/*.js",
+    "build": "tsc",
+    "pretest": "npm run build",
     "test": "nyc grunt test"
   },
   "repository": {
@@ -50,6 +52,7 @@
     "noflo-component-loader": "^0.3.5",
     "noflo-webpack-config": "^2.0.3",
     "nyc": "^15.1.0",
+    "typescript": "^4.0.3",
     "webpack": "^5.0.0",
     "webpack-cli": "^4.0.0"
   },

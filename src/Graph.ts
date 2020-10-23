@@ -6,25 +6,52 @@
 // FBP graphs are Event Emitters, providing signals when the graph
 // definition changes.
 /* eslint-env browser, node */
-const { EventEmitter } = require('events');
-
-const clone = require('clone');
-const deepEqual = require('deep-eql');
-const platform = require('./Platform');
+import { EventEmitter } from 'events';
+import * as clone from 'clone';
+import * as deepEqual from 'deep-eql';
+import { isBrowser } from './Platform';
+import {
+  GraphOptions,
+  PropertyMap,
+  GraphNode,
+  GraphEdge,
+  GraphJsonEdge,
+  GraphIIP,
+  GraphJsonIIP,
+  GraphExportedPort,
+  GraphGroup,
+} from './Types';
 
 // This class represents an abstract FBP graph containing nodes
 // connected to each other with edges.
 //
 // These graphs can be used for visualization and sketching, but
 // also are the way to start a NoFlo or other FBP network.
-class Graph extends EventEmitter {
+export default class Graph extends EventEmitter {
   // ## Creating new graphs
   //
   // Graphs are created by simply instantiating the Graph class
   // and giving it a name:
   //
   //     myGraph = new Graph 'My very cool graph'
-  constructor(name = '', options = {}) {
+  name: string;
+  properties: PropertyMap;
+  nodes: Array<GraphNode>;
+  edges: Array<GraphEdge>;
+  initializers: Array<GraphIIP>;
+  inports: {
+    [key: string]: GraphExportedPort,
+  };
+  outports: {
+    [key: string]: GraphExportedPort,
+  };
+  groups: Array<GraphGroup>;
+  transaction: {
+    id: string,
+    depth: number,
+  };
+  caseSensitive: boolean;
+  constructor(name: string = '', options: GraphOptions = {}) {
     super();
     this.setMaxListeners(0);
     this.name = name;
@@ -43,7 +70,7 @@ class Graph extends EventEmitter {
     this.caseSensitive = options.caseSensitive || false;
   }
 
-  getPortName(port = '') {
+  getPortName(port = ''): string {
     if (this.caseSensitive) {
       return port;
     }
@@ -54,7 +81,7 @@ class Graph extends EventEmitter {
   //
   // If no transaction is explicitly opened, each call to
   // the graph API will implicitly create a transaction for that change
-  startTransaction(id, metadata) {
+  startTransaction(id: string, metadata = {}) {
     if (this.transaction.id) {
       throw Error('Nested transactions not supported');
     }
@@ -64,7 +91,7 @@ class Graph extends EventEmitter {
     this.emit('startTransaction', id, metadata);
   }
 
-  endTransaction(id, metadata) {
+  endTransaction(id: string, metadata = {}) {
     if (!this.transaction.id) {
       throw Error('Attempted to end non-existing transaction');
     }
@@ -380,7 +407,7 @@ class Graph extends EventEmitter {
   // Nodes objects can be retrieved from the graph by their ID:
   //
   //     myNode = myGraph.getNode 'Read'
-  getNode(id) {
+  getNode(id): GraphNode {
     return this.nodes.find((node) => node && node.id === id);
   }
 
@@ -522,7 +549,7 @@ class Graph extends EventEmitter {
     const inPortName = this.getPortName(inPort);
     const inIndexVal = (inIndex === null) ? undefined : inIndex;
     const outIndexVal = (outIndex === null) ? undefined : outIndex;
-    if (this.edges.includes((edge) => {
+    if (this.edges.some((edge) => {
       // don't add a duplicate edge
       if ((edge.from.node === outNode)
         && (edge.from.port === outPortName)
@@ -667,7 +694,7 @@ class Graph extends EventEmitter {
   //     myGraph.addGraphInitialIndex 'somefile.txt', 'file', 2
   //
   // Adding an IIP will emit a `addInitial` event.
-  addInitial(data, node, port, metadata) {
+  addInitial(data, node, port, metadata = {}) {
     if (!this.getNode(node)) {
       return null;
     }
@@ -821,7 +848,7 @@ class Graph extends EventEmitter {
         ...this.outports,
       },
       groups: this.groups.map((group) => {
-        const groupData = {
+        const groupData: GraphGroup = {
           name: group.name,
           nodes: group.nodes,
         };
@@ -848,7 +875,7 @@ class Graph extends EventEmitter {
     });
 
     this.edges.forEach((edge) => {
-      const connection = {
+      const connection: GraphJsonEdge = {
         src: {
           process: edge.from.node,
           port: edge.from.port,
@@ -868,8 +895,8 @@ class Graph extends EventEmitter {
       json.connections.push(connection);
     });
 
-    this.initializers.forEach((initializer) => {
-      const iip = {
+    this.initializers.forEach((initializer: GraphIIP) => {
+      const iip: GraphJsonIIP = {
         data: initializer.from.data,
         tgt: {
           process: initializer.to.node,
@@ -889,7 +916,7 @@ class Graph extends EventEmitter {
   }
 
   save(file, callback) {
-    if (platform.isBrowser()) {
+    if (isBrowser()) {
       callback(new Error('Saving graphs not supported on browser'));
       return;
     }
@@ -1038,7 +1065,7 @@ exports.loadHTTP = function loadHTTP(url, callback) {
 };
 
 exports.loadFile = function loadFile(file, callback, metadata = {}, caseSensitive = false) {
-  if (platform.isBrowser()) {
+  if (isBrowser()) {
     // On browser we can try getting the file via AJAX
     exports.loadHTTP(file, (err, data) => {
       if (err) { return callback(err); }

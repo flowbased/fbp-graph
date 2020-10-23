@@ -4,14 +4,15 @@
 //     (c) 2013 Flowhub UG
 //     (c) 2011-2012 Henri Bergius, Nemein
 //     FBP Graph may be freely distributed under the MIT license
-//
 
-const { EventEmitter } = require('events');
-const clone = require('clone');
-const JournalStore = require('./JournalStore');
-const MemoryJournalStore = require('./MemoryJournalStore');
+import { EventEmitter } from 'events';
+import * as clone from 'clone';
+import Graph from './Graph';
+import JournalStore from './JournalStore';
+import MemoryJournalStore from './MemoryJournalStore';
+import { TransactionEntry } from './Types';
 
-function entryToPrettyString(entry) {
+function entryToPrettyString(entry: TransactionEntry): string {
   const a = entry.args;
   switch (entry.cmd) {
     case 'addNode': return `${a.id}(${a.component})`;
@@ -64,7 +65,12 @@ function calculateMeta(oldMeta, newMeta) {
 // It is not possible to operate on smaller changes than individual transactions.
 // Use startTransaction and endTransaction on Graph to structure the revisions logical changesets.
 class Journal extends EventEmitter {
-  constructor(graph, metadata, store) {
+  graph: Graph;
+  entries: Array<TransactionEntry>;
+  subscribed: boolean;
+  store: JournalStore;
+  currentRevision: number;
+  constructor(graph: Graph, metadata, store: JournalStore) {
     super();
     this.graph = graph;
     // Entries added during this revision
@@ -211,22 +217,20 @@ class Journal extends EventEmitter {
     this.entries = [];
   }
 
-  appendCommand(cmd, args, rev) {
+  appendCommand(cmd: string, args: object, rev = null) {
     if (!this.subscribed) {
       return;
     }
 
-    const entry = {
+    const entry: TransactionEntry = {
       cmd,
       args: clone(args),
+      rev: rev,
     };
-    if (rev != null) {
-      entry.rev = rev;
-    }
     this.entries.push(entry);
   }
 
-  executeEntry(entry) {
+  executeEntry(entry: TransactionEntry) {
     const a = entry.args;
     switch (entry.cmd) {
       case 'addNode': return this.graph.addNode(a.id, a.component);
@@ -257,7 +261,7 @@ class Journal extends EventEmitter {
     }
   }
 
-  executeEntryInversed(entry) {
+  executeEntryInversed(entry: TransactionEntry) {
     const a = entry.args;
     switch (entry.cmd) {
       case 'addNode': return this.graph.removeNode(a.id);
@@ -288,7 +292,7 @@ class Journal extends EventEmitter {
     }
   }
 
-  moveToRevision(revId) {
+  moveToRevision(revId: number) {
     if (revId === this.currentRevision) {
       return;
     }
@@ -328,7 +332,7 @@ class Journal extends EventEmitter {
   }
 
   // If there is something to undo
-  canUndo() {
+  canUndo(): boolean {
     return this.currentRevision > 0;
   }
 
@@ -339,13 +343,13 @@ class Journal extends EventEmitter {
   }
 
   // If there is something to redo
-  canRedo() {
+  canRedo(): boolean {
     return this.currentRevision < this.store.lastRevision;
   }
 
   // # Serializing
   // Render a pretty printed string of the journal. Changes are abbreviated
-  toPrettyString(startRev = 0, endRevParam) {
+  toPrettyString(startRev = 0, endRevParam): string {
     const endRev = endRevParam || this.store.lastRevision;
     const lines = [];
     for (let r = startRev, end = endRev, asc = startRev <= end;
@@ -360,7 +364,7 @@ class Journal extends EventEmitter {
   }
 
   // Serialize journal to JSON
-  toJSON(startRev = 0, endRevParam) {
+  toJSON(startRev = 0, endRevParam = null) {
     const endRev = endRevParam || this.store.lastRevision;
     const entries = [];
     for (let r = startRev, end = endRev; r < end; r += 1) {
