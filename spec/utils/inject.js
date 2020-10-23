@@ -2,7 +2,7 @@
 if (typeof global !== 'undefined') {
   // Node.js injections for Mocha tests
   global.chai = require('chai');
-  global.lib = require('../../index');
+  global.lib = require('../../lib/index');
   global.browser = false;
 } else {
   // Browser injections for Mocha tests
