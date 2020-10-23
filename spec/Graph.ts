@@ -36,10 +36,10 @@ describe('FBP Graph', () => {
           g.once('addNode', (node) => {
             chai.expect(node.id).to.equal('Foo');
             chai.expect(node.component).to.equal('Bar');
-            chai.expect(node).to.equal(n);
+            n = node;
             done();
           });
-          n = g.addNode('Foo', 'Bar');
+          g.addNode('Foo', 'Bar');
         });
         it('should be in graph\'s list of nodes', () => {
           chai.expect(g.nodes.length).to.equal(1);
@@ -558,7 +558,7 @@ describe('FBP Graph', () => {
             connection = edge;
           }
         });
-        chai.expect(connection).to.equal(null);
+        chai.expect(connection).to.be.a('undefined');
       });
       it('should still contain the other connection from Split1', () => {
         let connection;
