@@ -4,6 +4,7 @@
   "description": "JavaScript FBP graph library",
   "main": "index.js",
   "scripts": {
+    "pretest": "eslint *.js lib/*.js spec/*.js",
     "test": "nyc grunt test"
   },
   "repository": {
@@ -28,13 +29,14 @@
     "@babel/preset-env": "^7.2.0",
     "babel-loader": "^8.0.4",
     "chai": "^4.0.1",
-    "coffee-loader": "^1.0.0",
-    "coffeescript": "^2.0.2",
     "coveralls": "^3.0.0",
+    "eslint": "^7.11.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-chai": "0.0.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-mocha": "^8.0.0",
     "fbp-loader": "^0.1.1",
     "grunt": "^1.0.1",
-    "grunt-coffeelint": "0.0.16",
-    "grunt-contrib-coffee": "^2.0.0",
     "grunt-karma": "^4.0.0",
     "grunt-mocha-test": "^0.13.2",
     "grunt-noflo-browser": "^2.0.2",
@@ -53,6 +55,7 @@
   },
   "dependencies": {
     "clone": "^2.1.0",
+    "deep-eql": "^4.0.0",
     "fbp": "^1.6.0"
   },
   "nyc": {

@@ -1,7 +1,5 @@
 /node_modules/
 /browser/
-/lib/
-spec/*.js
 spec/result.xml
 npm-debug.log
 package-lock.json
