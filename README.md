@@ -27,6 +27,8 @@ fbpGraph.graph.loadFile('some/path.json', (err, graph) => {
 
 ## Changes
 
+* 0.6.1 (October 26th 2020)
+  - Fixed packaging issue
 * 0.6.0 (October 26th 2020)
   - Now shipping with TypeScript definitions
 * 0.5.0 (October 23rd 2020)
