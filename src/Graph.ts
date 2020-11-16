@@ -894,6 +894,10 @@ class Graph extends EventEmitter {
       processes: {},
       connections: [],
     };
+    if (json && json.properties) {
+      delete json.properties.baseDir;
+      delete json.properties.componentLoader;
+    }
 
     this.nodes.forEach((node) => {
       if (!json.processes) {
