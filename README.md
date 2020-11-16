@@ -27,6 +27,8 @@ fbpGraph.graph.loadFile('some/path.json', (err, graph) => {
 
 ## Changes
 
+* 0.6.2 (November 16th 2020)
+  - Graph properties `componentLoader` and `baseDir` are not serialized into JSON
 * 0.6.1 (October 26th 2020)
   - Fixed packaging issue
 * 0.6.0 (October 26th 2020)
