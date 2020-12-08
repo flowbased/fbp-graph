@@ -27,6 +27,8 @@ fbpGraph.graph.loadFile('some/path.json', (err, graph) => {
 
 ## Changes
 
+* 0.7.0 (git master)
+  - Add graph modification methods are now chainable, allowing you to do things like `graph.addNode().addEdge().toJSON()`
 * 0.6.3 (December 03rd 2020)
   - Fixed exporting of base Graph and Journal types in index
 * 0.6.2 (November 16th 2020)

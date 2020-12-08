@@ -86,7 +86,7 @@ class Graph extends EventEmitter {
   //
   // If no transaction is explicitly opened, each call to
   // the graph API will implicitly create a transaction for that change
-  startTransaction(id: string, metadata: JournalMetadata = {}) {
+  startTransaction(id: string, metadata: JournalMetadata = {}): Graph {
     if (this.transaction.id) {
       throw Error('Nested transactions not supported');
     }
@@ -94,9 +94,10 @@ class Graph extends EventEmitter {
     this.transaction.id = id;
     this.transaction.depth = 1;
     this.emit('startTransaction', id, metadata);
+    return this;
   }
 
-  endTransaction(id: string, metadata: JournalMetadata = {}) {
+  endTransaction(id: string, metadata: JournalMetadata = {}): Graph {
     if (!this.transaction.id) {
       throw Error('Attempted to end non-existing transaction');
     }
@@ -104,29 +105,32 @@ class Graph extends EventEmitter {
     this.transaction.id = null;
     this.transaction.depth = 0;
     this.emit('endTransaction', id, metadata);
+    return this;
   }
 
-  checkTransactionStart() {
+  checkTransactionStart(): Graph {
     if (!this.transaction.id) {
       this.startTransaction('implicit');
     } else if (this.transaction.id === 'implicit') {
       this.transaction.depth += 1;
     }
+    return this;
   }
 
-  checkTransactionEnd() {
+  checkTransactionEnd(): Graph {
     if (this.transaction.id === 'implicit') {
       this.transaction.depth -= 1;
     }
     if (this.transaction.depth === 0) {
       this.endTransaction('implicit');
     }
+    return this;
   }
 
   // ## Modifying Graph properties
   //
   // This method allows changing properties of the graph.
-  setProperties(properties: PropertyMap) {
+  setProperties(properties: PropertyMap): Graph {
     this.checkTransactionStart();
     const before = clone(this.properties);
     Object.keys(properties).forEach((item) => {
@@ -135,11 +139,14 @@ class Graph extends EventEmitter {
     });
     this.emit('changeProperties', this.properties, before);
     this.checkTransactionEnd();
+    return this;
   }
 
-  addInport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata = {}) {
+  addInport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata = {}): Graph {
     // Check that node exists
-    if (!this.getNode(nodeKey)) { return; }
+    if (!this.getNode(nodeKey)) {
+      return this;
+    }
 
     const portName = this.getPortName(publicPort);
     this.checkTransactionStart();
@@ -150,11 +157,14 @@ class Graph extends EventEmitter {
     };
     this.emit('addInport', portName, this.inports[portName]);
     this.checkTransactionEnd();
+    return this;
   }
 
-  removeInport(publicPort: string) {
+  removeInport(publicPort: string): Graph {
     const portName = this.getPortName(publicPort);
-    if (!this.inports[portName]) { return; }
+    if (!this.inports[portName]) {
+      return this;
+    }
 
     this.checkTransactionStart();
     const port = this.inports[portName];
@@ -162,24 +172,32 @@ class Graph extends EventEmitter {
     delete this.inports[portName];
     this.emit('removeInport', portName, port);
     this.checkTransactionEnd();
+    return this;
   }
 
-  renameInport(oldPort: string, newPort: string) {
+  renameInport(oldPort: string, newPort: string): Graph {
     const oldPortName = this.getPortName(oldPort);
     const newPortName = this.getPortName(newPort);
-    if (!this.inports[oldPortName]) { return; }
-    if (newPortName === oldPortName) { return; }
+    if (!this.inports[oldPortName]) {
+      return this;
+    }
+    if (newPortName === oldPortName) {
+      return this;
+    }
 
     this.checkTransactionStart();
     this.inports[newPortName] = this.inports[oldPortName];
     delete this.inports[oldPortName];
     this.emit('renameInport', oldPortName, newPortName);
     this.checkTransactionEnd();
+    return this;
   }
 
-  setInportMetadata(publicPort:string, metadata: GraphNodeMetadata) {
+  setInportMetadata(publicPort:string, metadata: GraphNodeMetadata): Graph {
     const portName = this.getPortName(publicPort);
-    if (!this.inports[portName]) { return; }
+    if (!this.inports[portName]) {
+      return this;
+    }
 
     this.checkTransactionStart();
     if (!this.inports[portName].metadata) {
@@ -200,11 +218,14 @@ class Graph extends EventEmitter {
     });
     this.emit('changeInport', portName, this.inports[portName], before, metadata);
     this.checkTransactionEnd();
+    return this;
   }
 
-  addOutport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata = {}) {
+  addOutport(publicPort: string, nodeKey: GraphNodeID, portKey: string, metadata: GraphNodeMetadata = {}): Graph {
     // Check that node exists
-    if (!this.getNode(nodeKey)) { return; }
+    if (!this.getNode(nodeKey)) {
+      return this;
+    }
 
     const portName = this.getPortName(publicPort);
     this.checkTransactionStart();
@@ -216,11 +237,14 @@ class Graph extends EventEmitter {
     this.emit('addOutport', portName, this.outports[portName]);
 
     this.checkTransactionEnd();
+    return this;
   }
 
-  removeOutport(publicPort: string) {
+  removeOutport(publicPort: string): Graph {
     const portName = this.getPortName(publicPort);
-    if (!this.outports[portName]) { return; }
+    if (!this.outports[portName]) {
+      return this;
+    }
 
     this.checkTransactionStart();
 
@@ -230,23 +254,29 @@ class Graph extends EventEmitter {
     this.emit('removeOutport', portName, port);
 
     this.checkTransactionEnd();
+    return this;
   }
 
-  renameOutport(oldPort: string, newPort: string) {
+  renameOutport(oldPort: string, newPort: string): Graph {
     const oldPortName = this.getPortName(oldPort);
     const newPortName = this.getPortName(newPort);
-    if (!this.outports[oldPortName]) { return; }
+    if (!this.outports[oldPortName]) {
+      return this;
+    }
 
     this.checkTransactionStart();
     this.outports[newPortName] = this.outports[oldPortName];
     delete this.outports[oldPortName];
     this.emit('renameOutport', oldPortName, newPortName);
     this.checkTransactionEnd();
+    return this;
   }
 
-  setOutportMetadata(publicPort: string, metadata: GraphNodeMetadata) {
+  setOutportMetadata(publicPort: string, metadata: GraphNodeMetadata): Graph {
     const portName = this.getPortName(publicPort);
-    if (!this.outports[portName]) { return; }
+    if (!this.outports[portName]) {
+      return this;
+    }
 
     this.checkTransactionStart();
     const before = clone(this.outports[portName].metadata);
@@ -267,11 +297,12 @@ class Graph extends EventEmitter {
     });
     this.emit('changeOutport', portName, this.outports[portName], before, metadata);
     this.checkTransactionEnd();
+    return this;
   }
 
   // ## Grouping nodes in a graph
   //
-  addGroup(group: string, nodes: Array<GraphNodeID>, metadata: GraphGroupMetadata): GraphGroup {
+  addGroup(group: string, nodes: Array<GraphNodeID>, metadata: GraphGroupMetadata): Graph {
     this.checkTransactionStart();
 
     const g = {
@@ -284,10 +315,10 @@ class Graph extends EventEmitter {
 
     this.checkTransactionEnd();
 
-    return g;
+    return this;
   }
 
-  renameGroup(oldName: string, newName: string) {
+  renameGroup(oldName: string, newName: string): Graph {
     this.checkTransactionStart();
     this.groups.forEach((group) => {
       if (!group) { return; }
@@ -297,9 +328,10 @@ class Graph extends EventEmitter {
       this.emit('renameGroup', oldName, newName);
     });
     this.checkTransactionEnd();
+    return this;
   }
 
-  removeGroup(groupName: string) {
+  removeGroup(groupName: string): Graph {
     this.checkTransactionStart();
     this.groups = this.groups.filter((group) => {
       if (!group) { return false; }
@@ -309,9 +341,10 @@ class Graph extends EventEmitter {
       return false;
     });
     this.checkTransactionEnd();
+    return this;
   }
 
-  setGroupMetadata(groupName: string, metadata: GraphGroupMetadata) {
+  setGroupMetadata(groupName: string, metadata: GraphGroupMetadata): Graph {
     this.checkTransactionStart();
     this.groups.forEach((group) => {
       if (!group) { return; }
@@ -332,6 +365,7 @@ class Graph extends EventEmitter {
       this.emit('changeGroup', group, before, metadata);
     });
     this.checkTransactionEnd();
+    return this;
   }
 
   // ## Adding a node to the graph
@@ -347,7 +381,7 @@ class Graph extends EventEmitter {
   //       y: 154
   //
   // Addition of a node will emit the `addNode` event.
-  addNode(id: GraphNodeID, component: string, metadata: GraphNodeMetadata = {}): GraphNode {
+  addNode(id: GraphNodeID, component: string, metadata: GraphNodeMetadata = {}): Graph {
     this.checkTransactionStart();
     const node = {
       id,
@@ -358,7 +392,7 @@ class Graph extends EventEmitter {
     this.emit('addNode', node);
 
     this.checkTransactionEnd();
-    return node;
+    return this;
   }
 
   // ## Removing a node from the graph
@@ -370,10 +404,10 @@ class Graph extends EventEmitter {
   //
   // Once the node has been removed, the `removeNode` event will be
   // emitted.
-  removeNode(id: GraphNodeID) {
+  removeNode(id: GraphNodeID): Graph {
     const node = this.getNode(id);
     if (!node) {
-      return;
+      return this;
     }
 
     this.checkTransactionStart();
@@ -418,6 +452,7 @@ class Graph extends EventEmitter {
     this.emit('removeNode', node);
 
     this.checkTransactionEnd();
+    return this;
   }
 
   // ## Getting a node
@@ -436,11 +471,13 @@ class Graph extends EventEmitter {
   // ## Renaming a node
   //
   // Nodes IDs can be changed by calling this method.
-  renameNode(oldId: GraphNodeID, newId: GraphNodeID) {
+  renameNode(oldId: GraphNodeID, newId: GraphNodeID): Graph {
     this.checkTransactionStart();
 
     const node = this.getNode(oldId);
-    if (!node) { return; }
+    if (!node) {
+      return this;
+    }
     node.id = newId;
 
     this.edges.forEach((e) => {
@@ -485,14 +522,17 @@ class Graph extends EventEmitter {
 
     this.emit('renameNode', oldId, newId);
     this.checkTransactionEnd();
+    return this;
   }
 
   // ## Changing a node's metadata
   //
   // Node metadata can be set or changed by calling this method.
-  setNodeMetadata(id: GraphNodeID, metadata: GraphNodeMetadata) {
+  setNodeMetadata(id: GraphNodeID, metadata: GraphNodeMetadata): Graph {
     const node = this.getNode(id);
-    if (!node) { return; }
+    if (!node) {
+      return this;
+    }
 
     this.checkTransactionStart();
 
@@ -515,6 +555,7 @@ class Graph extends EventEmitter {
 
     this.emit('changeNode', node, before, metadata);
     this.checkTransactionEnd();
+    return this;
   }
 
   // ## Connecting nodes
@@ -526,7 +567,7 @@ class Graph extends EventEmitter {
   //     myGraph.addEdgeIndex 'Read', 'out', null, 'Display', 'in', 2
   //
   // Adding an edge will emit the `addEdge` event.
-  addEdge(outNode: GraphNodeID, outPort: string, inNode: GraphNodeID, inPort: string, metadata: GraphEdgeMetadata = {}): GraphEdge | null {
+  addEdge(outNode: GraphNodeID, outPort: string, inNode: GraphNodeID, inPort: string, metadata: GraphEdgeMetadata = {}): Graph {
     const outPortName = this.getPortName(outPort);
     const inPortName = this.getPortName(inPort);
     if (this.edges.some((edge) => {
@@ -539,13 +580,13 @@ class Graph extends EventEmitter {
       }
       return false;
     })) {
-      return null;
+      return this;
     }
     if (!this.getNode(outNode)) {
-      return null;
+      return this;
     }
     if (!this.getNode(inNode)) {
-      return null;
+      return this;
     }
 
     this.checkTransactionStart();
@@ -565,11 +606,11 @@ class Graph extends EventEmitter {
     this.emit('addEdge', edge);
 
     this.checkTransactionEnd();
-    return edge;
+    return this;
   }
 
   // Adding an edge will emit the `addEdge` event.
-  addEdgeIndex(outNode: GraphNodeID, outPort: string, outIndex: number | undefined, inNode: GraphNodeID, inPort: string, inIndex: number | undefined, metadata: GraphEdgeMetadata = {}): GraphEdge | null {
+  addEdgeIndex(outNode: GraphNodeID, outPort: string, outIndex: number | undefined, inNode: GraphNodeID, inPort: string, inIndex: number | undefined, metadata: GraphEdgeMetadata = {}): Graph {
     const outPortName = this.getPortName(outPort);
     const inPortName = this.getPortName(inPort);
     const inIndexVal = (inIndex === null) ? undefined : inIndex;
@@ -586,13 +627,13 @@ class Graph extends EventEmitter {
       }
       return false;
     })) {
-      return null;
+      return this;
     }
     if (!this.getNode(outNode)) {
-      return null;
+      return this;
     }
     if (!this.getNode(inNode)) {
-      return null;
+      return this;
     }
 
     this.checkTransactionStart();
@@ -614,7 +655,7 @@ class Graph extends EventEmitter {
     this.emit('addEdge', edge);
 
     this.checkTransactionEnd();
-    return edge;
+    return this;
   }
 
   // ## Disconnected nodes
@@ -625,9 +666,9 @@ class Graph extends EventEmitter {
   //     myGraph.removeEdge 'Display', 'out', 'Foo', 'in'
   //
   // Removing a connection will emit the `removeEdge` event.
-  removeEdge(node: GraphNodeID, port: string, node2: GraphNodeID, port2: string) {
+  removeEdge(node: GraphNodeID, port: string, node2: GraphNodeID, port2: string): Graph {
     if (!this.getEdge(node, port, node2, port2)) {
-      return;
+      return this;
     }
     this.checkTransactionStart();
     const outPort = this.getPortName(port);
@@ -652,6 +693,7 @@ class Graph extends EventEmitter {
     });
 
     this.checkTransactionEnd();
+    return this;
   }
 
   // ## Getting an edge
@@ -683,9 +725,11 @@ class Graph extends EventEmitter {
   // ## Changing an edge's metadata
   //
   // Edge metadata can be set or changed by calling this method.
-  setEdgeMetadata(node: GraphNodeID, port: string, node2: GraphNodeID, port2: string, metadata: GraphEdgeMetadata) {
+  setEdgeMetadata(node: GraphNodeID, port: string, node2: GraphNodeID, port2: string, metadata: GraphEdgeMetadata): Graph {
     const edge = this.getEdge(node, port, node2, port2);
-    if (!edge) { return; }
+    if (!edge) {
+      return this;
+    }
 
     this.checkTransactionStart();
     if (!edge.metadata) { edge.metadata = {}; }
@@ -705,6 +749,7 @@ class Graph extends EventEmitter {
 
     this.emit('changeEdge', edge, before, metadata);
     this.checkTransactionEnd();
+    return this;
   }
 
   // ## Adding Initial Information Packets
@@ -726,9 +771,9 @@ class Graph extends EventEmitter {
   //     myGraph.addGraphInitialIndex 'somefile.txt', 'file', 2
   //
   // Adding an IIP will emit a `addInitial` event.
-  addInitial(data: any, node: GraphNodeID, port: string, metadata: GraphIIPMetadata = {}): GraphIIP | null {
+  addInitial(data: any, node: GraphNodeID, port: string, metadata: GraphIIPMetadata = {}): Graph {
     if (!this.getNode(node)) {
-      return null;
+      return this;
     }
     const portName = this.getPortName(port);
 
@@ -747,11 +792,13 @@ class Graph extends EventEmitter {
     this.emit('addInitial', initializer);
 
     this.checkTransactionEnd();
-    return initializer;
+    return this;
   }
 
-  addInitialIndex(data: any, node: GraphNodeID, port: string, index: number, metadata: GraphIIPMetadata = {}): GraphIIP | null {
-    if (!this.getNode(node)) { return null; }
+  addInitialIndex(data: any, node: GraphNodeID, port: string, index: number, metadata: GraphIIPMetadata = {}): Graph {
+    if (!this.getNode(node)) {
+      return this;
+    }
 
     const indexVal = (index === null) ? undefined : index;
     const portName = this.getPortName(port);
@@ -772,18 +819,18 @@ class Graph extends EventEmitter {
     this.emit('addInitial', initializer);
 
     this.checkTransactionEnd();
-    return initializer;
+    return this;
   }
 
-  addGraphInitial(data: any, node: string, metadata: GraphIIPMetadata = {}): GraphIIP | null {
+  addGraphInitial(data: any, node: string, metadata: GraphIIPMetadata = {}): Graph {
     const inport = this.inports[node];
-    if (!inport) { return null; }
+    if (!inport) { return this; }
     return this.addInitial(data, inport.process, inport.port, metadata);
   }
 
-  addGraphInitialIndex(data: any, node: string, index: number, metadata: GraphIIPMetadata = {}): GraphIIP | null {
+  addGraphInitialIndex(data: any, node: string, index: number, metadata: GraphIIPMetadata = {}): Graph {
     const inport = this.inports[node];
-    if (!inport) { return null; }
+    if (!inport) { return this; }
     return this.addInitialIndex(data, inport.process, inport.port, index, metadata);
   }
 
@@ -800,7 +847,7 @@ class Graph extends EventEmitter {
   //     myGraph.removeGraphInitial 'file'
   //
   // Remove an IIP will emit a `removeInitial` event.
-  removeInitial(node: GraphNodeID, port: string) {
+  removeInitial(node: GraphNodeID, port: string): Graph {
     const portName = this.getPortName(port);
     this.checkTransactionStart();
 
@@ -813,12 +860,16 @@ class Graph extends EventEmitter {
     });
 
     this.checkTransactionEnd();
+    return this;
   }
 
-  removeGraphInitial(node: string) {
+  removeGraphInitial(node: string): Graph {
     const inport = this.inports[node];
-    if (!inport) { return; }
+    if (!inport) {
+      return this;
+    }
     this.removeInitial(inport.process, inport.port);
+    return this;
   }
 
   toDOT(): string {
