@@ -526,11 +526,27 @@ class Journal extends EventEmitter {
     return entries;
   }
 
-  save(file: string, callback: (err: NodeJS.ErrnoException | null) => void) {
-    const json = JSON.stringify(this.toJSON(), null, 4);
-    const { writeFile } = require('fs');
-    // eslint-disable-next-line global-require
-    writeFile(`${file}.json`, json, 'utf-8', callback);
+  save(file: string): Promise<void>;
+  save(file: string, callback: (err: NodeJS.ErrnoException | null) => void): void;
+  save(file: string, callback?: (err: NodeJS.ErrnoException | null) => void): void | Promise<void> {
+    const promise = new Promise<void>((resolve, reject) => {
+      const json = JSON.stringify(this.toJSON(), null, 4);
+      const { writeFile } = require('fs');
+      writeFile(`${file}.json`, json, 'utf-8', (err: NodeJS.ErrnoException) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+    if (callback) {
+      promise.then(() => {
+        callback(null);
+      }, callback);
+      return;
+    }
+    return promise;
   }
 }
 

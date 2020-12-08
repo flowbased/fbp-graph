@@ -264,25 +264,17 @@ describe('FBP Graph', () => {
       const json = JSON.parse(jsonString);
       let g;
 
-      it('should produce a Graph when input is string', (done) => lib.graph.loadJSON(jsonString, (err, instance) => {
-        if (err) {
-          done(err);
-          return;
-        }
-        g = instance;
-        chai.expect(g).to.be.an('object');
-        done();
-      }));
+      it('should produce a Graph when input is string', () => lib.graph.loadJSON(jsonString)
+        .then((instance) => {
+          g = instance;
+          chai.expect(g).to.be.an('object');
+        }));
 
-      it('should produce a Graph when input is json', (done) => lib.graph.loadJSON(json, (err, instance) => {
-        if (err) {
-          done(err);
-          return;
-        }
-        g = instance;
-        chai.expect(g).to.be.an('object');
-        done();
-      }));
+      it('should produce a Graph when input is JSON', () => lib.graph.loadJSON(json)
+        .then((instance) => {
+          g = instance;
+          chai.expect(g).to.be.an('object');
+        }));
 
       it('should not mutate the inputted json object', (done) => {
         chai.expect(Object.keys(json.processes).length).to.equal(4);
@@ -693,24 +685,37 @@ describe('FBP Graph', () => {
           const fs = require('fs');
           fs.unlink(graphPath, done);
         });
-        it('should be possible to save a graph to a file', (done) => {
+        it('should be possible to save a graph to a file', () => {
+          const g = new lib.graph.Graph();
+          g.addNode('Foo', 'Bar');
+          originalGraph = g.toJSON();
+          return g.save(graphPath);
+        });
+        it('should be possible to save a graph to a file with a callback', (done) => {
           const g = new lib.graph.Graph();
           g.addNode('Foo', 'Bar');
           originalGraph = g.toJSON();
           g.save(graphPath, done);
         });
-        it('should be possible to load a graph from a file', (done) => lib.graph.loadFile(graphPath, (err, g) => {
-          if (err) {
-            done(err);
-            return;
-          }
-          if (!g) {
-            done(new Error('No graph'));
-            return;
-          }
-          chai.expect(g.toJSON()).to.eql(originalGraph);
-          done();
-        }));
+        it('should be possible to load a graph from a file', () => lib.graph.loadFile(graphPath)
+          .then((g) => {
+            chai.expect(g).to.be.an('object');
+            chai.expect(g.toJSON()).to.eql(originalGraph);
+          }));
+        it('should be possible to load a graph from a file with a callback', (done) => {
+          lib.graph.loadFile(graphPath, (err, g) => {
+            if (err) {
+              done(err);
+              return;
+            }
+            if (!g) {
+              done(new Error('No graph'));
+              return;
+            }
+            chai.expect(g.toJSON()).to.eql(originalGraph);
+            done();
+          });
+        });
       });
       describe('without .json suffix', () => {
         let graphPathLegacy;

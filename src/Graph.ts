@@ -8,6 +8,7 @@
 /* eslint-env browser, node */
 import { EventEmitter } from 'events';
 import * as clone from 'clone';
+import { writeFile, readFile } from 'fs';
 import { isBrowser } from './Platform';
 import {
   JournalMetadata,
@@ -1011,25 +1012,35 @@ class Graph extends EventEmitter {
     return json;
   }
 
-  save(file: string, callback: (err: Error | null, filename?: string) => void) {
+  save(file: string): Promise<string>;
+  save(file: string, callback: (err: Error | null, filename?: string) => void): void;
+  save(file: string, callback?: (err: Error | null, filename?: string) => void): void|Promise<string> {
+    let promise;
     if (isBrowser()) {
-      callback(new Error('Saving graphs not supported on browser'));
+      promise = Promise.reject(new Error('Saving graphs not supported on browser'));
+    } else {
+      promise = new Promise<string>((resolve, reject) => {
+        const json = JSON.stringify(this.toJSON(), null, 4);
+        let filename = file;
+        if (!filename.match(/\.json$/)) {
+          filename = `${file}.json`;
+        }
+        writeFile(filename, json, 'utf-8', (err: Error | null) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve(filename);
+        });
+      });
+    }
+    if (callback) {
+      promise.then((filename) => {
+        callback(null, filename);
+      }, callback);
       return;
     }
-
-    const json = JSON.stringify(this.toJSON(), null, 4);
-    let filename = file;
-    if (!filename.match(/\.json$/)) {
-      filename = `${file}.json`;
-    }
-    // eslint-disable-next-line global-require
-    require('fs').writeFile(filename, json, 'utf-8', (err: Error | null) => {
-      if (err) {
-        callback(err);
-        return;
-      }
-      callback(null, filename);
-    });
+    return promise;
   }
 }
 
@@ -1044,179 +1055,201 @@ interface StringLoadingCallback {
   (err: Error | null, result?: string): void;
 }
 
-function loadJSON(passedDefinition: string | GraphJson, callback: GraphLoadingCallback, metadata: JournalMetadata = {}) {
-  let definition: GraphJson;
-  if (typeof passedDefinition === 'string') {
-    definition = JSON.parse(passedDefinition);
-  } else {
-    definition = clone(passedDefinition);
-  }
-
-  if (!definition.properties) { definition.properties = {}; }
-  if (!definition.processes) { definition.processes = {}; }
-  if (!definition.connections) { definition.connections = []; }
-
-  const graph = new Graph(definition.properties.name, {
-    caseSensitive: definition.caseSensitive || false,
-  });
-
-  graph.startTransaction('loadJSON', metadata);
-  const properties: PropertyMap = {};
-  Object.keys(definition.properties).forEach((property) => {
-    if (property === 'name') {
-      return;
+function loadJSON(passedDefinition: string | GraphJson): Promise<Graph>;
+function loadJSON(passedDefinition: string | GraphJson, callback: GraphLoadingCallback, metadata?: JournalMetadata): void;
+function loadJSON(passedDefinition: string | GraphJson, callback?: GraphLoadingCallback, metadata: JournalMetadata = {}): void|Promise<Graph> {
+  const promise = new Promise<Graph>((resolve) => {
+    let definition: GraphJson;
+    if (typeof passedDefinition === 'string') {
+      definition = JSON.parse(passedDefinition);
+    } else {
+      definition = clone(passedDefinition);
     }
-    if (!definition.properties) {
-      return;
-    }
-    const value: any = definition.properties[property];
-    properties[property] = value;
-  });
-  graph.setProperties(properties);
 
-  Object.keys(definition.processes).forEach((id) => {
-    if (!definition.processes) {
-      return;
-    }
-    const def = definition.processes[id];
-    if (!def.metadata) { def.metadata = {}; }
-    graph.addNode(id, def.component, def.metadata);
-  });
+    if (!definition.properties) { definition.properties = {}; }
+    if (!definition.processes) { definition.processes = {}; }
+    if (!definition.connections) { definition.connections = []; }
 
-  definition.connections.forEach((conn) => {
-    const meta = conn.metadata ? conn.metadata : {};
-    if (typeof conn.data !== 'undefined') {
-      if (typeof conn.tgt.index === 'number') {
-        graph.addInitialIndex(
-          conn.data,
+    const graph = new Graph(definition.properties.name, {
+      caseSensitive: definition.caseSensitive || false,
+    });
+
+    graph.startTransaction('loadJSON', metadata);
+    const properties: PropertyMap = {};
+    Object.keys(definition.properties).forEach((property) => {
+      if (property === 'name') {
+        return;
+      }
+      if (!definition.properties) {
+        return;
+      }
+      const value: any = definition.properties[property];
+      properties[property] = value;
+    });
+    graph.setProperties(properties);
+
+    Object.keys(definition.processes).forEach((id) => {
+      if (!definition.processes) {
+        return;
+      }
+      const def = definition.processes[id];
+      if (!def.metadata) { def.metadata = {}; }
+      graph.addNode(id, def.component, def.metadata);
+    });
+
+    definition.connections.forEach((conn) => {
+      const meta = conn.metadata ? conn.metadata : {};
+      if (typeof conn.data !== 'undefined') {
+        if (typeof conn.tgt.index === 'number') {
+          graph.addInitialIndex(
+            conn.data,
+            conn.tgt.process,
+            graph.getPortName(conn.tgt.port),
+            conn.tgt.index,
+            meta,
+          );
+        } else {
+          graph.addInitial(
+            conn.data,
+            conn.tgt.process,
+            graph.getPortName(conn.tgt.port),
+            meta,
+          );
+        }
+        return;
+      }
+      if (typeof conn.src === 'undefined') {
+        return;
+      }
+      if ((typeof conn.src.index === 'number') || (typeof conn.tgt.index === 'number')) {
+        graph.addEdgeIndex(
+          conn.src.process,
+          graph.getPortName(conn.src.port),
+          conn.src.index,
           conn.tgt.process,
           graph.getPortName(conn.tgt.port),
           conn.tgt.index,
           meta,
         );
-      } else {
-        graph.addInitial(
-          conn.data,
-          conn.tgt.process,
-          graph.getPortName(conn.tgt.port),
-          meta,
-        );
+        return;
       }
-      return;
-    }
-    if (typeof conn.src === 'undefined') {
-      return;
-    }
-    if ((typeof conn.src.index === 'number') || (typeof conn.tgt.index === 'number')) {
-      graph.addEdgeIndex(
+      graph.addEdge(
         conn.src.process,
         graph.getPortName(conn.src.port),
-        conn.src.index,
         conn.tgt.process,
         graph.getPortName(conn.tgt.port),
-        conn.tgt.index,
         meta,
       );
-      return;
+    });
+
+    if (definition.inports) {
+      Object.keys(definition.inports).forEach((pub) => {
+        if (!definition.inports || !definition.inports[pub]) {
+          return;
+        }
+        const priv = definition.inports[pub];
+        graph.addInport(pub, priv.process, graph.getPortName(priv.port), priv.metadata || {});
+      });
     }
-    graph.addEdge(
-      conn.src.process,
-      graph.getPortName(conn.src.port),
-      conn.tgt.process,
-      graph.getPortName(conn.tgt.port),
-      meta,
-    );
+    if (definition.outports) {
+      Object.keys(definition.outports).forEach((pub) => {
+        if (!definition.outports || !definition.outports[pub]) {
+          return;
+        }
+        const priv = definition.outports[pub];
+        graph.addOutport(pub, priv.process, graph.getPortName(priv.port), priv.metadata || {});
+      });
+    }
+
+    if (definition.groups) {
+      definition.groups.forEach((group) => {
+        graph.addGroup(group.name, group.nodes, group.metadata || {});
+      });
+    }
+
+    graph.endTransaction('loadJSON');
+
+    resolve(graph);
   });
-
-  if (definition.inports) {
-    Object.keys(definition.inports).forEach((pub) => {
-      if (!definition.inports || !definition.inports[pub]) {
-        return;
-      }
-      const priv = definition.inports[pub];
-      graph.addInport(pub, priv.process, graph.getPortName(priv.port), priv.metadata || {});
-    });
+  if (callback) {
+    promise.then((graph) => {
+      callback(null, graph);
+    }, callback);
   }
-  if (definition.outports) {
-    Object.keys(definition.outports).forEach((pub) => {
-      if (!definition.outports || !definition.outports[pub]) {
-        return;
-      }
-      const priv = definition.outports[pub];
-      graph.addOutport(pub, priv.process, graph.getPortName(priv.port), priv.metadata || {});
-    });
-  }
-
-  if (definition.groups) {
-    definition.groups.forEach((group) => {
-      graph.addGroup(group.name, group.nodes, group.metadata || {});
-    });
-  }
-
-  graph.endTransaction('loadJSON');
-
-  return callback(null, graph);
+  return promise;
 }
 
-function loadFBP(fbpData: string, callback: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
-  let definition;
-  try {
+function loadFBP(fbpData: string): Promise<Graph>;
+function loadFBP(fbpData: string, callback: GraphLoadingCallback, metadata?: JournalMetadata): void;
+function loadFBP(fbpData: string, callback?: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false): void|Promise<Graph> {
+  const promise = new Promise<GraphJson>((resolve) => {
     // eslint-disable-next-line global-require
-    definition = require('fbp').parse(fbpData, { caseSensitive });
-  } catch (e) {
-    return callback(e);
+    resolve(require('fbp').parse(fbpData, { caseSensitive }));
+  })
+   .then((def) => loadJSON(def));
+  if (callback) {
+    promise.then((graph) => {
+      callback(null, graph);
+    }, callback);
   }
-  return loadJSON(definition, callback, metadata);
+  return promise;
 }
 
-function loadHTTP(url: string, callback: StringLoadingCallback) {
-  const req = new XMLHttpRequest();
-  req.onreadystatechange = () => {
-    if (req.readyState !== 4) { return; }
-    if (req.status !== 200) {
-      callback(new Error(`Failed to load ${url}: HTTP ${req.status}`));
-    }
-    callback(null, req.responseText);
-  };
-  req.open('GET', url, true);
-  req.send();
+function loadHTTP(url: string): Promise<string>
+function loadHTTP(url: string, callback: StringLoadingCallback): void;
+function loadHTTP(url: string, callback?: StringLoadingCallback): void|Promise<string> {
+  const promise = new Promise<string>((resolve, reject) => {
+    const req = new XMLHttpRequest();
+    req.onreadystatechange = () => {
+      if (req.readyState !== 4) { return; }
+      if (req.status !== 200) {
+        reject(new Error(`Failed to load ${url}: HTTP ${req.status}`));
+        return;
+      }
+      resolve(req.responseText);
+    };
+    req.open('GET', url, true);
+    req.send();
+  });
+  if (callback) {
+    promise.then((content) => {
+      callback(null, content);
+    }, callback);
+  }
+  return promise;
 }
 
-function loadFile(file: string, callback: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
+function loadFile(file: string): Promise<Graph>;
+function loadFile(file: string, callback: GraphLoadingCallback, metadata?: JournalMetadata, caseSensitive?: boolean): void;
+function loadFile(file: string, callback?: GraphLoadingCallback, metadata: JournalMetadata = {}, caseSensitive = false) {
+  let ioPromise: Promise<string>;
   if (isBrowser()) {
     // On browser we can try getting the file via AJAX
-    loadHTTP(file, (err: Error | null, data?: string) => {
-      if (err) {
-        callback(err);
-        return;
-      }
-      if (!data) {
-        callback(new Error('No data received'));
-        return;
-      }
-      if (file.split('.').pop() === 'fbp') {
-        loadFBP(data, callback, metadata);
-        return;
-      }
-      loadJSON(data, callback, metadata);
+    ioPromise = loadHTTP(file);
+  } else {
+    ioPromise = new Promise((resolve, reject) => {
+      // Node.js graph file
+      readFile(file, 'utf-8', (err: null|Error, data: string) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(data);
+      });
     });
-    return;
   }
-  // Node.js graph file
-  // eslint-disable-next-line global-require
-  require('fs').readFile(file, 'utf-8', (err: Error, data: string) => {
-    if (err) {
-      callback(err);
-      return;
-    }
-
+  const promise = ioPromise.then((content) => {
     if (file.split('.').pop() === 'fbp') {
-      loadFBP(data, callback, {}, caseSensitive);
-      return;
+      return loadFBP(content);
     }
-
-    loadJSON(data, callback, {});
+    return loadJSON(content);
   });
+  if (callback) {
+    promise.then((content) => {
+      callback(null, content);
+    }, callback);
+  }
+  return promise;
 }
 
 // remove everything in the graph
