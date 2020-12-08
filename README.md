@@ -27,8 +27,9 @@ fbpGraph.graph.loadFile('some/path.json', (err, graph) => {
 
 ## Changes
 
-* 0.7.0 (git master)
+* 0.7.0 (December 08th 2020)
   - All graph modification methods are now chainable, allowing you to do things like `graph.addNode().addEdge().toJSON()`
+  - Graph I/O methods (like `loadFile` and `save`) now return Promises in case no callback is supplied
 * 0.6.3 (December 03rd 2020)
   - Fixed exporting of base Graph and Journal types in index
 * 0.6.2 (November 16th 2020)
